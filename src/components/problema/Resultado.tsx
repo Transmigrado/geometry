@@ -35,6 +35,8 @@ const COLOR_B = { fuerte: "#f59e0b", claro: "#fde68a", texto: "text-amber-700" }
 
 export function Resultado({ problema, a, b }: Props) {
   const [armado, setArmado] = useState(1);
+  // oculto, el niño resuelve con los dibujos y después comprueba
+  const [calculos, setCalculos] = useState(true);
 
   const desarmable = problema === "superficie";
   const medidaA = medir(a, problema);
@@ -70,6 +72,15 @@ export function Resultado({ problema, a, b }: Props) {
       <p className="rounded-3xl border-4 border-dashed border-sky-300 bg-white p-6 text-lg font-bold text-slate-700">
         📝 {enunciado(problema, a, b)}
       </p>
+
+      <button
+        type="button"
+        onClick={() => setCalculos(!calculos)}
+        aria-pressed={!calculos}
+        className="self-start rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
+      >
+        {calculos ? "🙈 Ocultar los cálculos" : "👀 Mostrar los cálculos"}
+      </button>
 
       {desarmable && (
         <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -115,7 +126,7 @@ export function Resultado({ problema, a, b }: Props) {
           titulo={`${nombreCorto(a)} que queremos ${
             problema === "superficie" ? "cubrir" : "llenar"
           }`}
-          total={`${titulo} ${formatear(medidaA)}`}
+          total={calculos ? `${titulo} ${formatear(medidaA)}` : null}
           color={COLOR_A.texto}
         >
           <VistaCuerpo
@@ -131,7 +142,7 @@ export function Resultado({ problema, a, b }: Props) {
 
         <Tarjeta
           titulo={`${nombreCorto(b)} con que lo hacemos`}
-          total={`${titulo} ${formatear(medidaB)}`}
+          total={calculos ? `${titulo} ${formatear(medidaB)}` : null}
           color={COLOR_B.texto}
         >
           <VistaCuerpo
@@ -152,53 +163,75 @@ export function Resultado({ problema, a, b }: Props) {
         </p>
       )}
 
-      <section className="rounded-3xl bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-800">
-          Calculemos {problema === "superficie" ? "las superficies" : "los volúmenes"}
-        </h2>
-        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Fila
-            etiqueta={`${nombreCorto(a)} (lo que queremos cubrir)`}
-            cuenta={formula(a, problema)}
-          />
-          <Fila
-            etiqueta={`${nombreCorto(b)} (lo que usamos)`}
-            cuenta={formula(b, problema)}
-          />
-        </ul>
-      </section>
+      {calculos && (
+        <section className="rounded-3xl bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-800">
+            Calculemos{" "}
+            {problema === "superficie" ? "las superficies" : "los volúmenes"}
+          </h2>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            <Fila
+              etiqueta={`${nombreCorto(a)} (lo que queremos cubrir)`}
+              cuenta={formula(a, problema)}
+            />
+            <Fila
+              etiqueta={`${nombreCorto(b)} (lo que usamos)`}
+              cuenta={formula(b, problema)}
+            />
+          </ul>
+        </section>
+      )}
 
-      {contarCuadrados && esCaja(a) && (
+      {calculos && contarCuadrados && esCaja(a) && (
         <ConteoDeCuadrados medidas={medidasDeCaja(a)} unidad={unidad} />
       )}
 
       {apilarCubos && esCaja(a) && (
-        <LlenadoConCubos medidas={medidasDeCaja(a)} unidad={unidad} />
+        <LlenadoConCubos
+          medidas={medidasDeCaja(a)}
+          unidad={unidad}
+          calculos={calculos}
+        />
       )}
 
-      <BarraComparacion
-        veces={veces}
-        color={COLOR_B.fuerte}
-        etiqueta={`¿Cuántas veces cabe ${formatear(medidaB)} dentro de ${formatear(
-          medidaA,
-        )}?`}
-      />
+      {!calculos && (
+        <section className="rounded-3xl border-4 border-dashed border-emerald-400 bg-white p-6">
+          <p className="text-lg font-bold text-slate-700">
+            ✏️ Ahora te toca a ti: resuélvelo mirando los dibujos y después toca
+            «Mostrar los cálculos» para comprobar si acertaste.
+          </p>
+        </section>
+      )}
 
-      <Respuesta
-        operacion={`${formatear(medidaA)} ÷ ${formatear(medidaB)} = ${formatear(
-          veces,
-        )}`}
-        respuesta={`Necesitamos ${necesarios} ${
-          necesarios === 1 ? nombreCorto(b).toLowerCase().replace(/^(el|la) /, "") : nombrePlural(b)
-        }`}
-        nota={
-          Number.isInteger(veces)
-            ? "La división da justa: no sobra ni falta nada."
-            : `La división no da justa: con ${necesarios} nos pasamos un poco, así que sobra ${formatear(
-                necesarios * medidaB - medidaA,
-              )} de ${titulo}.`
-        }
-      />
+      {calculos && (
+        <BarraComparacion
+          veces={veces}
+          color={COLOR_B.fuerte}
+          etiqueta={`¿Cuántas veces cabe ${formatear(
+            medidaB,
+          )} dentro de ${formatear(medidaA)}?`}
+        />
+      )}
+
+      {calculos && (
+        <Respuesta
+          operacion={`${formatear(medidaA)} ÷ ${formatear(
+            medidaB,
+          )} = ${formatear(veces)}`}
+          respuesta={`Necesitamos ${necesarios} ${
+            necesarios === 1
+              ? nombreCorto(b).toLowerCase().replace(/^(el|la) /, "")
+              : nombrePlural(b)
+          }`}
+          nota={
+            Number.isInteger(veces)
+              ? "La división da justa: no sobra ni falta nada."
+              : `La división no da justa: con ${necesarios} nos pasamos un poco, así que sobra ${formatear(
+                  necesarios * medidaB - medidaA,
+                )} de ${titulo}.`
+          }
+        />
+      )}
     </div>
   );
 }
@@ -254,9 +287,11 @@ function ConteoDeCuadrados({
 function LlenadoConCubos({
   medidas,
   unidad,
+  calculos,
 }: {
   medidas: Medidas;
   unidad: number;
+  calculos: boolean;
 }) {
   const conteo = conteoVolumen(medidas, unidad);
   const [capas, setCapas] = useState(conteo.enAlto);
@@ -276,11 +311,15 @@ function LlenadoConCubos({
         Así se llena la caja, capa por capa
       </h2>
       <label htmlFor="capas" className="font-bold text-slate-700">
-        Capa {capas} de {conteo.enAlto}: {conteo.enLargo} × {conteo.enAncho} ×{" "}
-        {capas} ={" "}
-        <strong className="text-sky-700">
-          {conteo.enLargo * conteo.enAncho * capas} cubos
-        </strong>
+        Capa {capas} de {conteo.enAlto}
+        {calculos && (
+          <>
+            : {conteo.enLargo} × {conteo.enAncho} × {capas} ={" "}
+            <strong className="text-sky-700">
+              {conteo.enLargo * conteo.enAncho * capas} cubos
+            </strong>
+          </>
+        )}
       </label>
       <input
         id="capas"
@@ -324,7 +363,7 @@ function Tarjeta({
   children,
 }: {
   titulo: string;
-  total: string;
+  total: string | null;
   color: string;
   children: React.ReactNode;
 }) {
@@ -332,7 +371,7 @@ function Tarjeta({
     <section className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-xl font-bold text-slate-800">{titulo}</h2>
-        <p className={`font-extrabold ${color}`}>{total}</p>
+        {total && <p className={`font-extrabold ${color}`}>{total}</p>}
       </header>
       <div className="flex min-h-[18rem] items-center justify-center overflow-x-auto py-4">
         {children}
