@@ -1,4 +1,4 @@
-# Geometría Divertida
+# Figurama
 
 App web para que niños armen y visualicen los problemas de geometría del
 colegio: dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto
