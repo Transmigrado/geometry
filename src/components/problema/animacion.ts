@@ -30,7 +30,8 @@ export function useBucle(duracion: number) {
     let cuadro = 0;
     const inicio = performance.now();
     const paso = (ahora: number) => {
-      setT(((ahora - inicio) % duracion) / duracion);
+      const vuelta = ((ahora - inicio) % duracion) / duracion;
+      setT(Number.isFinite(vuelta) ? vuelta : 0);
       cuadro = requestAnimationFrame(paso);
     };
 
@@ -54,7 +55,11 @@ export function useReproduccion(duracion: number) {
     let cuadro = 0;
     inicio.current = performance.now();
     const paso = (ahora: number) => {
-      const avance = Math.min(1, (ahora - inicio.current) / duracion);
+      const transcurrido = (ahora - inicio.current) / duracion;
+      // sin esto, una duración inválida dejaría el avance en NaN para siempre
+      const avance = Number.isFinite(transcurrido)
+        ? Math.min(1, Math.max(0, transcurrido))
+        : 1;
       setT(avance);
       if (avance < 1) {
         cuadro = requestAnimationFrame(paso);

@@ -49,12 +49,14 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
         ? "cubos"
         : "nivel";
 
-  const piezas =
+  const cuantas =
     modo === "cuadrados"
       ? Math.ceil(cuadrados!.length / CARAS_DEL_CUBO)
       : modo === "cubos"
         ? cubos!.cubitos
-        : Math.max(1, Math.ceil(medir(a, problema) / medir(b, problema) - 1e-9));
+        : Math.ceil(medir(a, problema) / medir(b, problema) - 1e-9);
+  // una cuenta rara aquí envenenaría la duración y con ella todo el avance
+  const piezas = Number.isFinite(cuantas) ? Math.max(1, cuantas) : 1;
 
   const duracion = Math.min(9000, Math.max(2600, piezas * 650));
   const { t, reproduciendo, reproducir, ir } = useReproduccion(duracion);
@@ -313,10 +315,13 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
     if (modo === "cuadrados" && cuadrados) {
       const objetivo =
         cuadrados[Math.min(cuadrados.length - 1, colocadas * CARAS_DEL_CUBO)];
-      return {
-        x: base + (objetivo.x + unidad / 2) * escala,
-        y: (objetivo.y + unidad / 2) * escala,
-      };
+
+      if (objetivo) {
+        return {
+          x: base + (objetivo.x + unidad / 2) * escala,
+          y: (objetivo.y + unidad / 2) * escala,
+        };
+      }
     }
 
     if (modo === "cubos" && cubos) {
