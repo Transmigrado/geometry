@@ -5,6 +5,10 @@ import { tono } from "@/lib/color";
 type Props = {
   radio: number;
   altura: number;
+  /** las medidas del problema, para escribirlas en las reglas */
+  medidaRadio: number;
+  medidaAltura: number;
+  dimensiones: boolean;
   color: string;
   colorClaro: string;
   /** 0 = pared desenrollada y tapas afuera, 1 = cilindro armado */
@@ -25,6 +29,9 @@ const APLASTADO = 0.3;
 export function CilindroPlegable({
   radio,
   altura,
+  medidaRadio,
+  medidaAltura,
+  dimensiones,
   color,
   colorClaro,
   armado,
@@ -144,6 +151,66 @@ export function CilindroPlegable({
           >
             la pared enrollada
           </text>
+        )}
+
+        {/* las reglas solo tienen sentido con el cilindro armado */}
+        {dimensiones && (
+          <g opacity={silueta} stroke="rgba(15,23,42,.65)" strokeWidth={2}>
+            {/* el radio se mide por encima de la tapa, no sobre ella */}
+            <line
+              x1={centroX}
+              y1={cima - radioTapa - 16}
+              x2={centroX + radio}
+              y2={cima - radioTapa - 16}
+            />
+            <line
+              x1={centroX}
+              y1={cima - radioTapa - 22}
+              x2={centroX}
+              y2={cima - radioTapa - 10}
+            />
+            <line
+              x1={centroX + radio}
+              y1={cima - radioTapa - 22}
+              x2={centroX + radio}
+              y2={cima - radioTapa - 10}
+            />
+            <line
+              x1={centroX + radio + 10}
+              y1={cima}
+              x2={centroX + radio + 10}
+              y2={cima + altura}
+            />
+            <line
+              x1={centroX + radio + 4}
+              y1={cima}
+              x2={centroX + radio + 16}
+              y2={cima}
+            />
+            <line
+              x1={centroX + radio + 4}
+              y1={cima + altura}
+              x2={centroX + radio + 16}
+              y2={cima + altura}
+            />
+            <text
+              x={centroX + radio / 2}
+              y={cima - radioTapa - 22}
+              textAnchor="middle"
+              className="fill-slate-700 text-[10px] font-bold"
+              stroke="none"
+            >
+              radio {medidaRadio}
+            </text>
+            <text
+              x={centroX + radio + 20}
+              y={cima + altura / 2}
+              className="fill-slate-700 text-[10px] font-bold"
+              stroke="none"
+            >
+              alto {medidaAltura}
+            </text>
+          </g>
         )}
       </g>
     </svg>

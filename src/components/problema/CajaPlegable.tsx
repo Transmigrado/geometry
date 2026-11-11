@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { Regla } from "./Regla";
 import { conteoSuperficie, type ConteoCara, type Medidas } from "@/lib/problema";
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
   /** numerar los cuadrados solo tiene sentido cuando contamos superficie */
   numerar?: boolean;
   numerarDesde?: number;
+  /** dibujar las reglas de largo, ancho y alto */
+  dimensiones?: boolean;
 };
 
 /**
@@ -32,6 +35,7 @@ export function CajaPlegable({
   colorCuadrado,
   numerar = true,
   numerarDesde = 1,
+  dimensiones = false,
 }: Props) {
   const { largo, ancho, alto } = medidas;
   const { porCara, cuadrados } = conteoSuperficie(medidas, unidad);
@@ -44,6 +48,13 @@ export function CajaPlegable({
 
   const lado = unidad * escala;
   const mostrarNumeros = numerar && cuadrados <= 200 && lado >= 15;
+  const esCubo = largo === ancho && ancho === alto;
+  // sitio alrededor del dibujo para que quepan las reglas; a los lados hace
+  // falta más, porque ahí la etiqueta se extiende a lo ancho
+  const margenX = dimensiones ? 52 : 0;
+  const margenY = dimensiones ? 30 : 0;
+  // abierta, la regla tiene que esquivar la cara vecina; armada, no
+  const aparte = (1 - armado) * alto * escala + 10;
 
   const comun = {
     unidad,
@@ -58,11 +69,19 @@ export function CajaPlegable({
   return (
     <div
       className="relative mx-auto"
-      style={{ width: anchoT, height: altoT, perspective: 1400 }}
+      style={{
+        width: anchoT + margenX * 2,
+        height: altoT + margenY * 2,
+        perspective: 1400,
+      }}
     >
       <div
-        className="absolute inset-0"
+        className="absolute"
         style={{
+          left: margenX,
+          top: margenY,
+          width: anchoT,
+          height: altoT,
           transformStyle: "preserve-3d",
           transform: `translateY(${(-armado * ancho * escala) / 2}px) rotateX(${
             -16 * armado
@@ -74,6 +93,37 @@ export function CajaPlegable({
           {...comun}
           cara={cara("base")}
           style={{ left: alto * escala, top: (ancho + alto) * escala }}
+          regla={
+            dimensiones && (
+              <>
+                <Regla
+                  direccion="horizontal"
+                  etiqueta={esCubo ? `lado ${largo}` : `largo ${largo}`}
+                  style={{
+                    left: 0,
+                    right: 0,
+                    top: "100%",
+                    height: 14,
+                    marginTop: aparte,
+                  }}
+                />
+                {/* en el cubo los tres lados miden lo mismo: basta una regla */}
+                {!esCubo && (
+                  <Regla
+                    direccion="vertical"
+                    etiqueta={`ancho ${ancho}`}
+                    style={{
+                      top: 0,
+                      bottom: 0,
+                      right: "100%",
+                      width: 14,
+                      marginRight: aparte,
+                    }}
+                  />
+                )}
+              </>
+            )
+          }
         >
           <Cara
             {...comun}
@@ -111,6 +161,19 @@ export function CajaPlegable({
             cara={cara("derecha")}
             style={{ left: "100%", top: 0 }}
             bisagra={{ origen: "center left", giro: `rotateY(${90 * armado}deg)` }}
+            regla={
+              dimensiones &&
+              !esCubo && (
+                <Regla
+                  direccion="horizontal"
+                  etiqueta={`alto ${alto}`}
+                  // cuelga por debajo de la pared derecha, fuera del cuerpo
+                  style={{ left: 0, right: 0, top: "100%", height: 14, marginTop: 10 }}
+                  // esa pared está de canto en 3D: el número se endereza
+                  contra={`rotateY(${-90 * armado}deg)`}
+                />
+              )
+            }
           />
         </Cara>
       </div>
@@ -129,6 +192,7 @@ type CaraProps = {
   desplazamiento: number;
   style: CSSProperties;
   bisagra?: { origen: string; giro: string };
+  regla?: ReactNode;
   children?: ReactNode;
 };
 
@@ -143,6 +207,7 @@ function Cara({
   desplazamiento,
   style,
   bisagra,
+  regla,
   children,
 }: CaraProps) {
   const lado = unidad * escala;
@@ -198,7 +263,10 @@ function Cara({
         {cara.corto}
       </span>
 
+      {/* las caras vecinas van antes, para que la regla quede encima de
+          ellas cuando la caja está abierta */}
       {children}
+      {regla}
     </div>
   );
 }

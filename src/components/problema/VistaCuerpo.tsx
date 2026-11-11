@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { CajaPlegable } from "./CajaPlegable";
 import { CilindroPlegable } from "./CilindroPlegable";
+import { Regla } from "./Regla";
 import { esCaja, huella, medidasDeCaja, type Cuerpo } from "@/lib/cuerpos";
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
   colorClaro: string;
   /** lado de los cuadrados en que se divide cada cara plana */
   unidad: number;
+  /** dibujar las reglas con las medidas */
+  dimensiones: boolean;
 };
 
 export function VistaCuerpo({
@@ -26,6 +29,7 @@ export function VistaCuerpo({
   color,
   colorClaro,
   unidad,
+  dimensiones,
 }: Props) {
   if (esCaja(cuerpo)) {
     return (
@@ -37,6 +41,7 @@ export function VistaCuerpo({
         color={color}
         colorCuadrado={colorClaro}
         numerar={desarmable}
+        dimensiones={dimensiones}
       />
     );
   }
@@ -46,23 +51,47 @@ export function VistaCuerpo({
       <CilindroPlegable
         radio={cuerpo.radio * escala}
         altura={cuerpo.altura * escala}
+        medidaRadio={cuerpo.radio}
+        medidaAltura={cuerpo.altura}
         color={color}
         colorClaro={colorClaro}
         armado={armado}
         desarmable={desarmable}
+        dimensiones={dimensiones}
       />
     );
   }
 
   const medida = huella(cuerpo, desarmable);
+  // sitio bajo la pelota para la regla del radio
+  const margen = dimensiones && !desarmable ? 34 : 0;
 
   return (
     <div
       className="relative mx-auto shrink-0"
-      style={{ width: medida.ancho * escala, height: medida.alto * escala }}
+      style={{
+        width: medida.ancho * escala,
+        height: medida.alto * escala + margen,
+      }}
     >
       <Capa opacidad={desarmable ? armado : 1}>
-        <Esfera radio={cuerpo.radio * escala} color={color} />
+        <div
+          className="relative"
+          style={{
+            width: cuerpo.radio * 2 * escala,
+            height: cuerpo.radio * 2 * escala,
+          }}
+        >
+          <Esfera radio={cuerpo.radio * escala} color={color} />
+          {dimensiones && (
+            <Regla
+              direccion="horizontal"
+              etiqueta={`radio ${cuerpo.radio}`}
+              // debajo de la pelota, del centro al borde
+              style={{ left: "50%", right: 0, top: "100%", height: 14, marginTop: 10 }}
+            />
+          )}
+        </div>
       </Capa>
 
       {desarmable && (

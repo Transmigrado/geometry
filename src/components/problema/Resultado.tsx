@@ -38,6 +38,7 @@ export function Resultado({ problema, a, b }: Props) {
   const [armado, setArmado] = useState(1);
   // arrancan ocultos: primero el niño resuelve con los dibujos
   const [calculos, setCalculos] = useState(false);
+  const [dimensiones, setDimensiones] = useState(false);
 
   const desarmable = problema === "superficie";
   const medidaA = medir(a, problema);
@@ -113,6 +114,17 @@ export function Resultado({ problema, a, b }: Props) {
         </div>
       )}
 
+      <button
+        type="button"
+        onClick={() => setDimensiones(!dimensiones)}
+        aria-pressed={dimensiones}
+        className={`self-start rounded-full px-6 py-3 font-bold shadow transition ${
+          dimensiones ? "bg-sky-500 text-white" : "bg-white text-sky-700"
+        }`}
+      >
+        📏 Ver dimensiones
+      </button>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Tarjeta
           titulo={`${nombreCorto(a)} que queremos ${
@@ -129,6 +141,7 @@ export function Resultado({ problema, a, b }: Props) {
             color={COLOR_A.fuerte}
             colorClaro={COLOR_A.claro}
             unidad={unidad}
+            dimensiones={dimensiones}
           />
         </Tarjeta>
 
@@ -145,6 +158,7 @@ export function Resultado({ problema, a, b }: Props) {
             color={COLOR_B.fuerte}
             colorClaro={COLOR_B.claro}
             unidad={unidad}
+            dimensiones={dimensiones}
           />
         </Tarjeta>
       </div>
