@@ -11,7 +11,7 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   title: "Geometría Divertida",
   description:
-    "Aprende geometría básica jugando: figuras, lados, esquinas y mucho color.",
+    "Arma tu problema de superficie o volumen y mira cómo se resuelve paso a paso.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -23,11 +23,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="text-2xl font-extrabold text-sky-700">
               📐 Geometría Divertida
             </Link>
-            <nav className="flex gap-4 text-lg font-bold text-sky-600">
-              <Link href="/figuras" className="hover:underline">
-                Figuras
-              </Link>
-            </nav>
+            <p className="text-lg font-bold text-sky-600">
+              Problemas de superficie y volumen
+            </p>
           </div>
         </header>
 
