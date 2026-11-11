@@ -74,15 +74,6 @@ export function Resultado({ problema, a, b }: Props) {
         📝 {enunciado(problema, a, b)}
       </p>
 
-      <button
-        type="button"
-        onClick={() => setCalculos(!calculos)}
-        aria-pressed={!calculos}
-        className="self-start rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
-      >
-        {calculos ? "🙈 Ocultar los cálculos" : "👀 Mostrar los cálculos"}
-      </button>
-
       {desarmable && (
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <label
@@ -172,6 +163,34 @@ export function Resultado({ problema, a, b }: Props) {
         </p>
       )}
 
+      {/* el interruptor vive donde empiezan los cálculos, para que se vea
+          qué es lo que está tapado */}
+      {calculos ? (
+        <button
+          type="button"
+          onClick={() => setCalculos(false)}
+          aria-pressed={false}
+          className="self-start rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
+        >
+          🙈 Ocultar los cálculos
+        </button>
+      ) : (
+        <section className="flex flex-col items-start gap-4 rounded-3xl border-4 border-dashed border-emerald-400 bg-white p-6">
+          <p className="text-lg font-bold text-slate-700">
+            ✏️ Ahora te toca a ti: resuélvelo mirando los dibujos y después
+            comprueba si acertaste.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCalculos(true)}
+            aria-pressed
+            className="rounded-full bg-emerald-500 px-6 py-3 font-bold text-white shadow"
+          >
+            👀 Mostrar los cálculos
+          </button>
+        </section>
+      )}
+
       {calculos && (
         <section className="rounded-3xl bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold text-slate-800">
@@ -197,15 +216,6 @@ export function Resultado({ problema, a, b }: Props) {
 
       {calculos && apilarCubos && esCaja(a) && (
         <LlenadoConCubos medidas={medidasDeCaja(a)} unidad={unidad} />
-      )}
-
-      {!calculos && (
-        <section className="rounded-3xl border-4 border-dashed border-emerald-400 bg-white p-6">
-          <p className="text-lg font-bold text-slate-700">
-            ✏️ Ahora te toca a ti: resuélvelo mirando los dibujos y después toca
-            «Mostrar los cálculos» para comprobar si acertaste.
-          </p>
-        </section>
       )}
 
       {calculos && (
