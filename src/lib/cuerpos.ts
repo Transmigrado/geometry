@@ -240,10 +240,10 @@ export function advertencia(
     } quedan huecos entre ellos, así que en la vida real caben menos. Aquí comparamos los volúmenes.`;
   }
 
-  if (problema === "superficie" && !esCaja(a)) {
-    return `${nombreCorto(
-      a,
-    )} tiene superficie curva, así que no se puede cubrir con trozos planos sin doblarlos. Aquí comparamos cuánta superficie tiene cada uno.`;
+  // el cilindro sí se puede forrar enrollando, como la etiqueta de un tarro;
+  // la esfera no: su superficie no se puede aplanar de ninguna manera
+  if (problema === "superficie" && a.tipo === "esfera") {
+    return "La esfera no se puede aplanar, así que no hay forma de cubrirla con trozos planos sin arrugarlos. Aquí comparamos cuánta superficie tiene cada una.";
   }
 
   return null;
