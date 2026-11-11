@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Contador } from "./Contador";
+import { IconoProblema } from "./IconoProblema";
 import { Resultado } from "./Resultado";
 import {
   CATALOGO,
@@ -81,18 +82,18 @@ export function ProblemaWizard() {
       {paso === "problema" && (
         <Pregunta titulo="¿Qué tipo de problema tienes?">
           <Opcion
-            emoji="🎁"
+            dibujo={<IconoProblema tipo="superficie" color="#f59e0b" />}
             titulo="Cubrir la superficie"
-            descripcion="¿Cuánta superficie del cuerpo B necesito para cubrir el cuerpo A por fuera?"
+            descripcion="Pegar piezas por fuera, como forrar un regalo."
             onClick={() => {
               setProblema("superficie");
               setPaso("figuraA");
             }}
           />
           <Opcion
-            emoji="📦"
+            dibujo={<IconoProblema tipo="volumen" color="#f59e0b" />}
             titulo="Llenar el volumen"
-            descripcion="¿Cuánto volumen del cuerpo B necesito para llenar el cuerpo A por dentro?"
+            descripcion="Meter cuerpos por dentro hasta que no quepa ninguno más."
             onClick={() => {
               setProblema("volumen");
               setPaso("figuraA");
@@ -237,12 +238,14 @@ function Pregunta({
 
 function Opcion({
   emoji,
+  dibujo,
   titulo,
   descripcion,
   onClick,
   color = "bg-sky-500",
 }: {
-  emoji: string;
+  emoji?: string;
+  dibujo?: React.ReactNode;
   titulo: string;
   descripcion: string;
   onClick: () => void;
@@ -255,9 +258,11 @@ function Opcion({
       className="flex h-full w-full items-center gap-4 rounded-3xl bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
     >
       <span
-        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${color} text-3xl`}
+        className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-3xl ${
+          dibujo ? "bg-slate-100" : color
+        }`}
       >
-        {emoji}
+        {dibujo ?? emoji}
       </span>
       <span>
         <span className="block text-xl font-bold text-slate-800">{titulo}</span>

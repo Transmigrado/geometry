@@ -1,81 +1,59 @@
 "use client";
 
-import { tono } from "@/lib/color";
+import { CuboIso, limitesIso, posicionIso } from "./iso";
 import type { ConteoVolumen } from "@/lib/problema";
 
 type Props = {
   conteo: ConteoVolumen;
-  /** cuántas capas se muestran (para contar de a poco) */
-  capas: number;
-  /** lado del cubito en píxeles, igual en todas las figuras que se comparan */
+  /** cuántos cubitos se muestran, contando piso por piso */
+  visibles: number;
+  /** lado del cubito en píxeles */
   lado: number;
   color: string;
 };
 
-const COS30 = Math.cos(Math.PI / 6);
-
 /** Dibuja los cubitos que caben dentro de la caja, en vista isométrica. */
-export function CubosApilados({ conteo, capas, lado, color }: Props) {
+export function CubosApilados({ conteo, visibles, lado, color }: Props) {
   const { enLargo, enAncho, enAlto } = conteo;
-  const dx = lado * COS30;
-  const dy = lado / 2;
-  const visibles = Math.min(capas, enAlto);
 
   const cubos = [];
-  for (let k = 0; k < visibles; k += 1) {
-    for (let i = 0; i < enLargo; i += 1) {
-      for (let j = 0; j < enAncho; j += 1) {
-        // en isometría los cubos de una misma diagonal nunca se tapan entre sí
-        cubos.push({ i, j, k, profundidad: i + j + k });
+  for (let k = 0; k < enAlto; k += 1) {
+    for (let j = 0; j < enAncho; j += 1) {
+      for (let i = 0; i < enLargo; i += 1) {
+        const puesto = k * enLargo * enAncho + j * enLargo + i;
+        if (puesto < visibles) {
+          // en isometría los cubos de una misma diagonal no se tapan entre sí
+          cubos.push({ i, j, k, profundidad: i + j + k });
+        }
       }
     }
   }
-  cubos.sort((a, b) => a.profundidad - b.profundidad);
+  cubos.sort((uno, otro) => uno.profundidad - otro.profundidad);
 
-  const minX = -enAncho * dx;
-  const maxX = enLargo * dx;
-  const minY = -(enAlto - 1) * lado - dy;
-  const maxY = (enLargo + enAncho - 2) * dy + dy + lado;
+  const limites = limitesIso(enLargo, enAncho, enAlto, lado);
   const margen = 4;
-  const ancho = maxX - minX + margen * 2;
-  const alto = maxY - minY + margen * 2;
-
-  const caras = [tono(color, 1), tono(color, 0.82), tono(color, 0.64)];
 
   return (
     <svg
-      viewBox={`${minX - margen} ${minY - margen} ${ancho} ${alto}`}
-      width={ancho}
-      height={alto}
+      viewBox={`${limites.minX - margen} ${limites.minY - margen} ${
+        limites.maxX - limites.minX + margen * 2
+      } ${limites.maxY - limites.minY + margen * 2}`}
+      width={limites.maxX - limites.minX + margen * 2}
+      height={limites.maxY - limites.minY + margen * 2}
       className="mx-auto shrink-0"
       role="presentation"
       aria-hidden="true"
     >
       {cubos.map(({ i, j, k }) => {
-        const cx = (i - j) * dx;
-        const cy = (i + j) * dy - k * lado;
-
+        const { cx, cy } = posicionIso(i, j, k, lado);
         return (
-          <g key={`${i}-${j}-${k}`} stroke="rgba(15,23,42,.45)" strokeWidth={0.8}>
-            <polygon
-              points={`${cx},${cy - dy} ${cx + dx},${cy} ${cx},${cy + dy} ${
-                cx - dx
-              },${cy}`}
-              fill={caras[0]}
-            />
-            <polygon
-              points={`${cx - dx},${cy} ${cx},${cy + dy} ${cx},${
-                cy + dy + lado
-              } ${cx - dx},${cy + lado}`}
-              fill={caras[1]}
-            />
-            <polygon
-              points={`${cx},${cy + dy} ${cx + dx},${cy} ${cx + dx},${
-                cy + lado
-              } ${cx},${cy + dy + lado}`}
-              fill={caras[2]}
-            />
-          </g>
+          <CuboIso
+            key={`${i}-${j}-${k}`}
+            cx={cx}
+            cy={cy}
+            lado={lado}
+            color={color}
+          />
         );
       })}
     </svg>

@@ -45,15 +45,35 @@ src/
   components/problema/
     ProblemaWizard.tsx              # los 5 pasos y su estado
     Contador.tsx                    # selector de números con botones grandes
+    IconoProblema.tsx               # cáscara contra relleno, en bucle
     Resultado.tsx                   # explicación paso a paso y respuesta
+    Forrado.tsx                     # la animación de cubrir o llenar
     VistaCuerpo.tsx                 # dibuja cualquier cuerpo, armado o abierto
     CajaPlegable.tsx                # caja en 3D que se abre en forma de T
+    CilindroPlegable.tsx            # cilindro que se desenrolla
     CubosApilados.tsx               # cubitos dentro de la caja, en isométrico
+    MiniCuerpo.tsx                  # el cuerpo como ficha pequeña
     BarraComparacion.tsx            # cuántas veces cabe B en A
+    animacion.ts                    # avance 0→1, en bucle o una sola vez
+    iso.tsx                         # dibujo isométrico de cubitos
   lib/
     cuerpos.ts                      # catálogo, fórmulas y enunciados
     problema.ts                     # conteo de cuadrados y cubitos
+    red.ts                          # la T en coordenadas planas
+    color.ts                        # tonos claros y oscuros
 ```
+
+## Ayudas visuales
+
+El resultado arranca con **los cálculos ocultos**: primero el niño resuelve
+mirando los dibujos y después comprueba. Lo que siempre se ve:
+
+- los dos cuerpos, que se pueden desarmar con un deslizador
+- cada cara dividida en cuadrados numerados
+- la animación de forrado o llenado: las piezas salen de una fuente, el cubo
+  se abre en sus 6 cuadrados al llegar, y las usadas se van juntando en una
+  bandeja que se puede contar
+- en los cuerpos curvos, el nivel que sube al verter cada pieza
 
 Para agregar un cuerpo nuevo: su entrada en `CATALOGO` y sus casos en
 `superficie`, `volumen`, `formula`, `campos` y `huella` (`src/lib/cuerpos.ts`),

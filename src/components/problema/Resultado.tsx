@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BarraComparacion } from "./BarraComparacion";
 import { CubosApilados } from "./CubosApilados";
+import { Forrado } from "./Forrado";
 import { VistaCuerpo } from "./VistaCuerpo";
 import {
   advertencia,
@@ -35,8 +36,8 @@ const COLOR_B = { fuerte: "#f59e0b", claro: "#fde68a", texto: "text-amber-700" }
 
 export function Resultado({ problema, a, b }: Props) {
   const [armado, setArmado] = useState(1);
-  // oculto, el niño resuelve con los dibujos y después comprueba
-  const [calculos, setCalculos] = useState(true);
+  // arrancan ocultos: primero el niño resuelve con los dibujos
+  const [calculos, setCalculos] = useState(false);
 
   const desarmable = problema === "superficie";
   const medidaA = medir(a, problema);
@@ -157,6 +158,14 @@ export function Resultado({ problema, a, b }: Props) {
         </Tarjeta>
       </div>
 
+      <Forrado
+        problema={problema}
+        a={a}
+        b={b}
+        escala={escala}
+        colorB={COLOR_B.fuerte}
+      />
+
       {aviso && (
         <p className="rounded-3xl bg-amber-100 p-4 font-semibold text-amber-900">
           ⚠️ {aviso}
@@ -186,12 +195,8 @@ export function Resultado({ problema, a, b }: Props) {
         <ConteoDeCuadrados medidas={medidasDeCaja(a)} unidad={unidad} />
       )}
 
-      {apilarCubos && esCaja(a) && (
-        <LlenadoConCubos
-          medidas={medidasDeCaja(a)}
-          unidad={unidad}
-          calculos={calculos}
-        />
+      {calculos && apilarCubos && esCaja(a) && (
+        <LlenadoConCubos medidas={medidasDeCaja(a)} unidad={unidad} />
       )}
 
       {!calculos && (
@@ -287,11 +292,9 @@ function ConteoDeCuadrados({
 function LlenadoConCubos({
   medidas,
   unidad,
-  calculos,
 }: {
   medidas: Medidas;
   unidad: number;
-  calculos: boolean;
 }) {
   const conteo = conteoVolumen(medidas, unidad);
   const [capas, setCapas] = useState(conteo.enAlto);
@@ -311,15 +314,11 @@ function LlenadoConCubos({
         Así se llena la caja, capa por capa
       </h2>
       <label htmlFor="capas" className="font-bold text-slate-700">
-        Capa {capas} de {conteo.enAlto}
-        {calculos && (
-          <>
-            : {conteo.enLargo} × {conteo.enAncho} × {capas} ={" "}
-            <strong className="text-sky-700">
-              {conteo.enLargo * conteo.enAncho * capas} cubos
-            </strong>
-          </>
-        )}
+        Capa {capas} de {conteo.enAlto}: {conteo.enLargo} × {conteo.enAncho} ×{" "}
+        {capas} ={" "}
+        <strong className="text-sky-700">
+          {conteo.enLargo * conteo.enAncho * capas} cubos
+        </strong>
       </label>
       <input
         id="capas"
@@ -333,7 +332,7 @@ function LlenadoConCubos({
       <div className="flex justify-center overflow-x-auto py-2">
         <CubosApilados
           conteo={conteo}
-          capas={capas}
+          visibles={conteo.enLargo * conteo.enAncho * capas}
           lado={lado}
           color={COLOR_B.fuerte}
         />
