@@ -14,7 +14,9 @@ El wizard pregunta, en orden:
 
 Al medir el volumen se elige si las medidas están en centímetros o en metros,
 y el resultado se muestra junto al mismo volumen armado con cubitos de 1 de
-lado: «80 cm³, es decir, 80 cubos de 1 cm de lado».
+lado: «80 cm³, es decir, 80 cubos de 1 cm de lado». Debajo, ese volumen
+aparece en litros dibujado como botellas, con el recordatorio de que un litro
+es un cubo de 10 cm de lado, o sea 1000 cm³.
 
 Cuerpos disponibles: cubo, paralelepípedo, esfera y cilindro.
 

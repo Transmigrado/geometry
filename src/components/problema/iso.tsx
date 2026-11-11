@@ -46,6 +46,75 @@ export function limitesIso(
   };
 }
 
+function entre(uno: number[], otro: number[], parte: number) {
+  return [
+    uno[0] + (otro[0] - uno[0]) * parte,
+    uno[1] + (otro[1] - uno[1]) * parte,
+  ];
+}
+
+/** Un cubo grande con sus caras divididas en cubitos, sin dibujarlos todos. */
+export function CuboCuadriculado({
+  cx,
+  cy,
+  lado,
+  divisiones,
+  color,
+}: {
+  cx: number;
+  cy: number;
+  lado: number;
+  divisiones: number;
+  color: string;
+}) {
+  const caras = carasIso(cx, cy, lado);
+  const dx = lado * COS30;
+  const dy = lado / 2;
+
+  const arriba = [cx, cy - dy];
+  const derecha = [cx + dx, cy];
+  const abajo = [cx, cy + dy];
+  const izquierda = [cx - dx, cy];
+  const abajoBajo = [cx, cy + dy + lado];
+  const izquierdaBajo = [cx - dx, cy + lado];
+  const derechaBajo = [cx + dx, cy + lado];
+
+  const lineas = [];
+  for (let paso = 1; paso < divisiones; paso += 1) {
+    const parte = paso / divisiones;
+    lineas.push(
+      [entre(arriba, izquierda, parte), entre(derecha, abajo, parte)],
+      [entre(arriba, derecha, parte), entre(izquierda, abajo, parte)],
+      [entre(izquierda, abajo, parte), entre(izquierdaBajo, abajoBajo, parte)],
+      [entre(izquierda, izquierdaBajo, parte), entre(abajo, abajoBajo, parte)],
+      [entre(abajo, derecha, parte), entre(abajoBajo, derechaBajo, parte)],
+      [entre(abajo, abajoBajo, parte), entre(derecha, derechaBajo, parte)],
+    );
+  }
+
+  return (
+    <g>
+      <polygon points={caras.arriba} fill={tono(color, 1)} />
+      <polygon points={caras.izquierda} fill={tono(color, 0.82)} />
+      <polygon points={caras.derecha} fill={tono(color, 0.64)} />
+      {lineas.map(([desde, hasta], indice) => (
+        <line
+          key={indice}
+          x1={desde[0]}
+          y1={desde[1]}
+          x2={hasta[0]}
+          y2={hasta[1]}
+          stroke="rgba(255,255,255,.55)"
+          strokeWidth={0.8}
+        />
+      ))}
+      <polygon points={caras.arriba} fill="none" stroke="rgba(15,23,42,.5)" />
+      <polygon points={caras.izquierda} fill="none" stroke="rgba(15,23,42,.5)" />
+      <polygon points={caras.derecha} fill="none" stroke="rgba(15,23,42,.5)" />
+    </g>
+  );
+}
+
 export function CuboIso({
   cx,
   cy,
