@@ -6,9 +6,15 @@ volumen de B se necesita para cubrir o llenar A?
 
 El wizard pregunta, en orden:
 
-1. Tipo de problema: cubrir la **superficie** o llenar el **volumen**.
-2. Cuerpo A (el que se cubre o se llena) y sus medidas.
-3. Cuerpo B (con el que se cubre o se llena) y sus medidas.
+1. Tipo de problema: cubrir la **superficie**, llenar el **volumen** o
+   **medir el volumen** de un cuerpo.
+2. Cuerpo A (el que se cubre, se llena o se mide) y sus medidas.
+3. Cuerpo B (con el que se cubre o se llena) y sus medidas. Medir el volumen
+   usa un solo cuerpo, así que se salta este paso.
+
+Al medir el volumen se elige si las medidas están en centímetros o en metros,
+y el resultado se muestra junto al mismo volumen armado con cubitos de 1 de
+lado: «80 cm³, es decir, 80 cubos de 1 cm de lado».
 
 Cuerpos disponibles: cubo, paralelepípedo, esfera y cilindro.
 
@@ -47,6 +53,7 @@ src/
     Contador.tsx                    # selector de números con botones grandes
     IconoProblema.tsx               # cáscara contra relleno, en bucle
     Resultado.tsx                   # explicación paso a paso y respuesta
+    MedidaDeVolumen.tsx             # el volumen de un cuerpo, en cubitos
     Forrado.tsx                     # la animación de cubrir o llenar
     VistaCuerpo.tsx                 # dibuja cualquier cuerpo, armado o abierto
     CajaPlegable.tsx                # caja en 3D que se abre en forma de T

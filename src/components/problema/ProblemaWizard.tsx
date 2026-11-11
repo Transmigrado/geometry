@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Contador } from "./Contador";
 import { IconoProblema } from "./IconoProblema";
+import { MedidaDeVolumen } from "./MedidaDeVolumen";
 import { Resultado } from "./Resultado";
 import {
   CATALOGO,
@@ -17,19 +18,26 @@ import { MEDIDA_MAX, MEDIDA_MIN } from "@/lib/problema";
 
 type Paso = "problema" | "figuraA" | "medidasA" | "figuraB" | "medidasB";
 
-const ORDEN: Paso[] = [
+/** medir el volumen ocupa un solo cuerpo: no hace falta el segundo */
+type Modo = TipoProblema | "medirVolumen";
+
+const CON_DOS_CUERPOS: Paso[] = [
   "problema",
   "figuraA",
   "medidasA",
   "figuraB",
   "medidasB",
 ];
+const CON_UN_CUERPO: Paso[] = ["problema", "figuraA", "medidasA"];
 
 export function ProblemaWizard() {
   const [paso, setPaso] = useState<Paso | "resultado">("problema");
-  const [problema, setProblema] = useState<TipoProblema | null>(null);
+  const [problema, setProblema] = useState<Modo | null>(null);
   const [a, setA] = useState<Cuerpo | null>(null);
   const [b, setB] = useState<Cuerpo | null>(null);
+
+  const soloUno = problema === "medirVolumen";
+  const orden = soloUno ? CON_UN_CUERPO : CON_DOS_CUERPOS;
 
   function elegirCuerpo(tipo: TipoCuerpo, cual: "a" | "b") {
     const inicial = CATALOGO.find((item) => item.tipo === tipo)!.inicial;
@@ -49,7 +57,31 @@ export function ProblemaWizard() {
     setB(null);
   }
 
-  if (paso === "resultado" && problema && a && b) {
+  if (paso === "resultado" && soloUno && a) {
+    return (
+      <div className="flex flex-col gap-6">
+        <MedidaDeVolumen cuerpo={a} />
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setPaso("medidasA")}
+            className="rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
+          >
+            ← Cambiar las medidas
+          </button>
+          <button
+            type="button"
+            onClick={reiniciar}
+            className="rounded-full bg-sky-500 px-6 py-3 font-bold text-white shadow"
+          >
+            Hacer otro problema
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (paso === "resultado" && problema && problema !== "medirVolumen" && a && b) {
     return (
       <div className="flex flex-col gap-6">
         <Resultado problema={problema} a={a} b={b} />
@@ -77,7 +109,7 @@ export function ProblemaWizard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Progreso paso={paso as Paso} />
+      <Progreso paso={paso as Paso} orden={orden} />
 
       {paso === "problema" && (
         <Pregunta titulo="¿Qué tipo de problema tienes?">
@@ -99,11 +131,26 @@ export function ProblemaWizard() {
               setPaso("figuraA");
             }}
           />
+          <Opcion
+            dibujo={<IconoProblema tipo="medirVolumen" color="#f59e0b" />}
+            titulo="¿Cuánto volumen tiene?"
+            descripcion="Medir un cuerpo y ver a cuántos cubitos equivale."
+            onClick={() => {
+              setProblema("medirVolumen");
+              setPaso("figuraA");
+            }}
+          />
         </Pregunta>
       )}
 
       {paso === "figuraA" && (
-        <Pregunta titulo={`¿Qué cuerpo quieres ${accion}?`}>
+        <Pregunta
+          titulo={
+            soloUno
+              ? "¿De qué cuerpo quieres saber el volumen?"
+              : `¿Qué cuerpo quieres ${accion}?`
+          }
+        >
           <ListaDeCuerpos onElegir={(tipo) => elegirCuerpo(tipo, "a")} />
         </Pregunta>
       )}
@@ -111,7 +158,10 @@ export function ProblemaWizard() {
       {paso === "medidasA" && a && (
         <Pregunta titulo={`¿Cuánto mide ${nombreCuerpo(a).split(" de ")[0]}?`}>
           <Medidas cuerpo={a} onCambio={setA} />
-          <Siguiente onClick={() => setPaso("figuraB")} />
+          <Siguiente
+            etiqueta={soloUno ? "Ver el problema ✨" : "Seguir"}
+            onClick={() => setPaso(soloUno ? "resultado" : "figuraB")}
+          />
         </Pregunta>
       )}
 
@@ -138,7 +188,7 @@ export function ProblemaWizard() {
         <button
           type="button"
           onClick={() =>
-            setPaso(ORDEN[Math.max(0, ORDEN.indexOf(paso as Paso) - 1)])
+            setPaso(orden[Math.max(0, orden.indexOf(paso as Paso) - 1)])
           }
           className="self-start rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
         >
@@ -199,16 +249,16 @@ function Medidas({
   );
 }
 
-function Progreso({ paso }: { paso: Paso }) {
-  const actual = ORDEN.indexOf(paso) + 1;
+function Progreso({ paso, orden }: { paso: Paso; orden: Paso[] }) {
+  const actual = orden.indexOf(paso) + 1;
 
   return (
     <div className="flex items-center gap-3">
       <p className="font-bold text-slate-500">
-        Paso {actual} de {ORDEN.length}
+        Paso {actual} de {orden.length}
       </p>
       <div className="flex gap-1.5">
-        {ORDEN.map((nombre, indice) => (
+        {orden.map((nombre, indice) => (
           <span
             key={nombre}
             className={`h-2.5 w-8 rounded-full ${

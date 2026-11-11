@@ -16,7 +16,7 @@ export function IconoProblema({
   tipo,
   color,
 }: {
-  tipo: TipoProblema;
+  tipo: TipoProblema | "medirVolumen";
   color: string;
 }) {
   const t = useBucle(tipo === "superficie" ? 4200 : 3600);
@@ -73,7 +73,24 @@ export function IconoProblema({
               />
             )),
           ]
-        : orden.slice(0, puestos).map(({ i, j, k }) => {
+        : tipo === "medirVolumen"
+          ? // el cuerpo entero mientras un cubito se enciende tras otro,
+            // como contándolos
+            orden.map(({ i, j, k }, indice) => {
+              const { cx, cy } = posicionIso(i, j, k, LADO);
+              return (
+                <CuboIso
+                  key={`contar-${i}-${j}-${k}`}
+                  cx={cx}
+                  cy={cy}
+                  lado={LADO}
+                  color={
+                    indice === puestos % orden.length ? color : "#cbd5e1"
+                  }
+                />
+              );
+            })
+          : orden.slice(0, puestos).map(({ i, j, k }) => {
             const { cx, cy } = posicionIso(i, j, k, LADO);
             return (
               <CuboIso

@@ -133,16 +133,18 @@ export function formula(cuerpo: Cuerpo, problema: TipoProblema): string {
   }
 }
 
-export function nombreCuerpo(cuerpo: Cuerpo): string {
+export function nombreCuerpo(cuerpo: Cuerpo, unidad = ""): string {
+  const u = unidad ? ` ${unidad}` : "";
+
   switch (cuerpo.tipo) {
     case "cubo":
-      return `un cubo de lado ${cuerpo.lado}`;
+      return `un cubo de lado ${cuerpo.lado}${u}`;
     case "paralelepipedo":
-      return `una caja de largo ${cuerpo.largo}, ancho ${cuerpo.ancho} y alto ${cuerpo.alto}`;
+      return `una caja de largo ${cuerpo.largo}${u}, ancho ${cuerpo.ancho}${u} y alto ${cuerpo.alto}${u}`;
     case "esfera":
-      return `una esfera de radio ${cuerpo.radio}`;
+      return `una esfera de radio ${cuerpo.radio}${u}`;
     case "cilindro":
-      return `un cilindro de radio ${cuerpo.radio} y altura ${cuerpo.altura}`;
+      return `un cilindro de radio ${cuerpo.radio}${u} y altura ${cuerpo.altura}${u}`;
   }
 }
 
