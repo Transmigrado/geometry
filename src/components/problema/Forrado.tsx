@@ -13,7 +13,13 @@ import {
 } from "@/lib/cuerpos";
 import { tono } from "@/lib/color";
 import { conteoVolumen } from "@/lib/problema";
-import { cuadradosDeRed, redDeCaja } from "@/lib/red";
+import {
+  cuadradosDeRed,
+  piezasDeCaja,
+  piezasDeCilindro,
+  redDeCaja,
+  type Pieza,
+} from "@/lib/red";
 
 type Props = {
   problema: TipoProblema;
@@ -42,12 +48,25 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
       ? conteoVolumen(medidas, unidad)
       : null;
 
+  // cubrir una superficie se ve mejor con el cuerpo abierto, salvo la
+  // esfera, que no se puede aplanar
+  const red =
+    problema === "superficie"
+      ? medidas
+        ? piezasDeCaja(medidas)
+        : a.tipo === "cilindro"
+          ? piezasDeCilindro(a.radio, a.altura)
+          : null
+      : null;
+
   const modo =
     cuadrados && cuadrados.length > 0 && cuadrados.length <= 240
       ? "cuadrados"
       : cubos && cubos.cubitos > 0 && cubos.cubitos <= 400
         ? "cubos"
-        : "nivel";
+        : red
+          ? "desarme"
+          : "nivel";
 
   const cuantas =
     modo === "cuadrados"
@@ -66,6 +85,12 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
   const colocadas = Math.min(piezas, Math.floor(avance));
   const fase = porPiezas ? avance - colocadas : 0;
   const volando = porPiezas && colocadas < piezas && fase > 0;
+  // la pieza se va vaciando durante la segunda mitad de su viaje
+  const vertido = Math.max(0, (fase - 0.5) / 0.5);
+  const hecho = Math.min(
+    medir(a, problema),
+    (colocadas + vertido) * medir(b, problema),
+  );
 
   const escena = dibujarDestino();
   const fuenteX = TAMANO_MINI / 2;
@@ -216,17 +241,30 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
       };
     }
 
+    if (modo === "desarme" && red) {
+      return {
+        ancho: red.ancho * escala,
+        alto: red.alto * escala,
+        nodo: (
+          <>
+            {red.piezas.map((pieza, indice) => (
+              <PiezaDeRed
+                key={indice}
+                pieza={pieza}
+                parte={cubiertoDe(indice)}
+                escala={escala}
+                color={colorB}
+                rayas={`url(#${id}-rayas)`}
+                id={`${id}-pieza-${indice}`}
+              />
+            ))}
+          </>
+        ),
+      };
+    }
+
     const forma = formaDe(a, escala);
-    // la pieza se va vaciando durante la segunda mitad de su viaje
-    const vertido = Math.max(0, (fase - 0.5) / 0.5);
-    const llenado = alturaLlena(
-      a,
-      problema,
-      Math.min(
-        1,
-        ((colocadas + vertido) * medir(b, problema)) / medir(a, problema),
-      ),
-    );
+    const llenado = alturaLlena(a, problema, hecho / medir(a, problema));
 
     return {
       ancho: forma.ancho,
@@ -309,8 +347,32 @@ export function Forrado({ problema, a, b, escala, colorB }: Props) {
     );
   }
 
+  /** Cuánto lleva cubierta la pieza, repartiendo el área en orden. */
+  function cubiertoDe(indice: number) {
+    const antes = red!.piezas
+      .slice(0, indice)
+      .reduce((suma, pieza) => suma + pieza.area, 0);
+
+    return Math.max(0, Math.min(1, (hecho - antes) / red!.piezas[indice].area));
+  }
+
   function puntoDestino() {
     const base = TAMANO_MINI + HUECO;
+
+    if (modo === "desarme" && red) {
+      // la pieza viaja hacia el trozo que se está cubriendo ahora
+      const indice = Math.max(
+        0,
+        red.piezas.findIndex((_, numero) => cubiertoDe(numero) < 1),
+      );
+      const pieza = red.piezas[indice];
+      const centro =
+        pieza.forma === "rect"
+          ? { x: pieza.x + pieza.ancho / 2, y: pieza.y + pieza.alto / 2 }
+          : { x: pieza.cx, y: pieza.cy };
+
+      return { x: base + centro.x * escala, y: centro.y * escala };
+    }
 
     if (modo === "cuadrados" && cuadrados) {
       const objetivo =
@@ -402,6 +464,101 @@ function ordenDeCubos(nx: number, ny: number, nz: number) {
     }
   }
   return cubos;
+}
+
+/** Un trozo de la red, vacío y con lo que ya se cubrió encima. */
+function PiezaDeRed({
+  pieza,
+  parte,
+  escala,
+  color,
+  rayas,
+  id,
+}: {
+  pieza: Pieza;
+  parte: number;
+  escala: number;
+  color: string;
+  rayas: string;
+  id: string;
+}) {
+  const borde = "rgba(15,23,42,.35)";
+
+  if (pieza.forma === "rect") {
+    const alto = pieza.alto * escala;
+    const y = pieza.y * escala;
+
+    return (
+      <>
+        <rect
+          x={pieza.x * escala}
+          y={y}
+          width={pieza.ancho * escala}
+          height={alto}
+          fill={rayas}
+          stroke={borde}
+        />
+        <rect
+          x={pieza.x * escala}
+          y={y + alto * (1 - parte)}
+          width={pieza.ancho * escala}
+          height={alto * parte}
+          fill={color}
+        />
+        <rect
+          x={pieza.x * escala}
+          y={y}
+          width={pieza.ancho * escala}
+          height={alto}
+          fill="none"
+          stroke={borde}
+        />
+      </>
+    );
+  }
+
+  const radio = pieza.radio * escala;
+  const cx = pieza.cx * escala;
+  const cy = pieza.cy * escala;
+  // en un círculo el área no sube parejo con la altura
+  const altura = radio * alturaDeCirculo(parte);
+
+  return (
+    <>
+      <defs>
+        <clipPath id={id}>
+          <rect
+            x={cx - radio}
+            y={cy + radio - altura}
+            width={radio * 2}
+            height={altura}
+          />
+        </clipPath>
+      </defs>
+      <circle cx={cx} cy={cy} r={radio} fill={rayas} stroke={borde} />
+      <circle cx={cx} cy={cy} r={radio} fill={color} clipPath={`url(#${id})`} />
+      <circle cx={cx} cy={cy} r={radio} fill="none" stroke={borde} />
+    </>
+  );
+}
+
+/** Qué altura, en radios, cubre esa parte del área de un círculo. */
+function alturaDeCirculo(parte: number) {
+  if (parte <= 0) return 0;
+  if (parte >= 1) return 2;
+
+  let bajo = 0;
+  let alto = 2;
+  for (let paso = 0; paso < 24; paso += 1) {
+    const medio = (bajo + alto) / 2;
+    const area =
+      (Math.acos(1 - medio) - (1 - medio) * Math.sqrt(2 * medio - medio ** 2)) /
+      Math.PI;
+    if (area < parte) bajo = medio;
+    else alto = medio;
+  }
+
+  return (bajo + alto) / 2;
 }
 
 function formaDe(cuerpo: Cuerpo, escala: number) {

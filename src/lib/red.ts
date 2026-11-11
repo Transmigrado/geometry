@@ -22,6 +22,67 @@ export type CaraEnRed = Posicion & {
   alto: number;
 };
 
+/** Un trozo plano del cuerpo abierto, con el área que le toca cubrir. */
+export type Pieza =
+  | {
+      forma: "rect";
+      x: number;
+      y: number;
+      ancho: number;
+      alto: number;
+      area: number;
+    }
+  | { forma: "circulo"; cx: number; cy: number; radio: number; area: number };
+
+export type RedPlana = { ancho: number; alto: number; piezas: Pieza[] };
+
+/** La caja abierta en T: sus seis caras, en el orden en que las contamos. */
+export function piezasDeCaja(medidas: Medidas): RedPlana {
+  const red = redDeCaja(medidas);
+
+  return {
+    ancho: red.ancho,
+    alto: red.alto,
+    piezas: red.caras.map((cara) => ({
+      forma: "rect",
+      x: cara.x,
+      y: cara.y,
+      ancho: cara.ancho,
+      alto: cara.alto,
+      area: cara.ancho * cara.alto,
+    })),
+  };
+}
+
+/** El cilindro abierto: la tapa, la pared desenrollada y la base. */
+export function piezasDeCilindro(radio: number, altura: number): RedPlana {
+  const contorno = 2 * Math.PI * radio;
+  const areaTapa = Math.PI * radio ** 2;
+
+  return {
+    ancho: contorno,
+    alto: altura + 4 * radio,
+    piezas: [
+      { forma: "circulo", cx: contorno / 2, cy: radio, radio, area: areaTapa },
+      {
+        forma: "rect",
+        x: 0,
+        y: 2 * radio,
+        ancho: contorno,
+        alto: altura,
+        area: contorno * altura,
+      },
+      {
+        forma: "circulo",
+        cx: contorno / 2,
+        cy: 3 * radio + altura,
+        radio,
+        area: areaTapa,
+      },
+    ],
+  };
+}
+
 export function redDeCaja(medidas: Medidas) {
   const donde = posiciones(medidas);
 
