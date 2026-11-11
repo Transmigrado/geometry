@@ -169,6 +169,8 @@ export function MedidaDeVolumen({ cuerpo }: { cuerpo: Cuerpo }) {
 }
 
 const MAXIMO_BOTELLAS = 24;
+/** las que van después de los puntitos, para que se vea que la fila sigue */
+const ULTIMAS = 3;
 
 /**
  * El mismo volumen contado en litros. Un litro es un cubo de 10 cm de lado,
@@ -177,8 +179,11 @@ const MAXIMO_BOTELLAS = 24;
 function Litros({ total, unidad }: { total: number; unidad: Unidad }) {
   const litros = unidad === "cm" ? total / 1000 : total * 1000;
   const botellas = Math.ceil(litros - 1e-9);
-  const dibujadas = Math.min(botellas, MAXIMO_BOTELLAS);
   const resto = litros - Math.floor(litros);
+  const ultima = resto > 0 ? resto : 1;
+
+  const caben = botellas <= MAXIMO_BOTELLAS;
+  const primeras = caben ? botellas : MAXIMO_BOTELLAS - ULTIMAS;
 
   return (
     <section className="grid gap-6 rounded-3xl bg-white p-6 shadow-sm lg:grid-cols-2">
@@ -188,18 +193,28 @@ function Litros({ total, unidad }: { total: number; unidad: Unidad }) {
         </h2>
 
         <ul className="flex flex-wrap items-end gap-1">
-          {Array.from({ length: Math.max(1, dibujadas) }, (_, indice) => (
-            <li key={indice}>
+          {Array.from({ length: primeras }, (_, indice) => (
+            <li key={`primera-${indice}`}>
               <Botella
                 color={COLOR_LITRO}
-                llenado={indice === botellas - 1 && resto > 0 ? resto : 1}
+                llenado={caben && indice === botellas - 1 ? ultima : 1}
               />
             </li>
           ))}
-          {botellas > dibujadas && (
-            <li className="pb-2 font-bold text-slate-500">
-              … y {redondear(botellas - dibujadas)} más
-            </li>
+
+          {/* si no caben todas, los puntitos dicen que la fila sigue y sigue */}
+          {!caben && (
+            <>
+              <li className="px-1 pb-3 text-2xl font-bold text-slate-400">…</li>
+              {Array.from({ length: ULTIMAS }, (_, indice) => (
+                <li key={`ultima-${indice}`}>
+                  <Botella
+                    color={COLOR_LITRO}
+                    llenado={indice === ULTIMAS - 1 ? ultima : 1}
+                  />
+                </li>
+              ))}
+            </>
           )}
         </ul>
 
