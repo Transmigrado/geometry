@@ -24,12 +24,6 @@ const ORDEN: Paso[] = [
   "medidasB",
 ];
 
-const EJEMPLO: { problema: TipoProblema; a: Cuerpo; b: Cuerpo } = {
-  problema: "superficie",
-  a: { tipo: "paralelepipedo", largo: 10, ancho: 4, alto: 2 },
-  b: { tipo: "cubo", lado: 2 },
-};
-
 export function ProblemaWizard() {
   const [paso, setPaso] = useState<Paso | "resultado">("problema");
   const [problema, setProblema] = useState<TipoProblema | null>(null);
@@ -45,13 +39,6 @@ export function ProblemaWizard() {
       setB(inicial);
       setPaso("medidasB");
     }
-  }
-
-  function usarEjemplo() {
-    setProblema(EJEMPLO.problema);
-    setA(EJEMPLO.a);
-    setB(EJEMPLO.b);
-    setPaso("resultado");
   }
 
   function reiniciar() {
@@ -146,28 +133,17 @@ export function ProblemaWizard() {
         </Pregunta>
       )}
 
-      <div className="flex flex-wrap gap-3">
-        {paso !== "problema" && (
-          <button
-            type="button"
-            onClick={() =>
-              setPaso(ORDEN[Math.max(0, ORDEN.indexOf(paso as Paso) - 1)])
-            }
-            className="rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
-          >
-            ← Volver
-          </button>
-        )}
-        {paso === "problema" && (
-          <button
-            type="button"
-            onClick={usarEjemplo}
-            className="rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
-          >
-            Ver un ejemplo: cubrir una caja de 10 × 4 × 2 con cubos de 2
-          </button>
-        )}
-      </div>
+      {paso !== "problema" && (
+        <button
+          type="button"
+          onClick={() =>
+            setPaso(ORDEN[Math.max(0, ORDEN.indexOf(paso as Paso) - 1)])
+          }
+          className="self-start rounded-full bg-white px-6 py-3 font-bold text-sky-700 shadow"
+        >
+          ← Volver
+        </button>
+      )}
     </div>
   );
 }

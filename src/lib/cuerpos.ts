@@ -211,8 +211,9 @@ export function huella(cuerpo: Cuerpo, desarmado: boolean) {
         : { ancho: largo + alto, alto: ancho + alto };
     }
     case "esfera":
+      // los 4 círculos equivalentes, más sitio para la explicación
       return desarmado
-        ? { ancho: 4 * cuerpo.radio, alto: 4 * cuerpo.radio }
+        ? { ancho: 4 * cuerpo.radio, alto: 4 * cuerpo.radio + 3 }
         : { ancho: 2 * cuerpo.radio, alto: 2 * cuerpo.radio };
     case "cilindro":
       return desarmado

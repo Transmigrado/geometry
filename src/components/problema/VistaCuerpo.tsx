@@ -198,10 +198,22 @@ function DesarmeCilindro({
 /** La esfera no se puede aplanar, pero su superficie equivale a 4 círculos. */
 function DesarmeEsfera({ radio, color }: { radio: number; color: string }) {
   return (
-    <div className="flex flex-wrap justify-center" style={{ width: radio * 4 }}>
-      {[0, 1, 2, 3].map((indice) => (
-        <Circulo key={indice} radio={radio} color={color} />
-      ))}
+    <div className="flex flex-col items-center gap-2">
+      <div
+        className="flex flex-wrap justify-center"
+        style={{ width: radio * 4 }}
+      >
+        {[0, 1, 2, 3].map((indice) => (
+          <Circulo key={indice} radio={radio} color={color} />
+        ))}
+      </div>
+      <p
+        className="text-center text-xs font-semibold text-slate-600"
+        style={{ maxWidth: Math.max(radio * 4, 220) }}
+      >
+        La esfera no se puede aplanar, pero su superficie mide lo mismo que
+        estos 4 círculos de su mismo radio.
+      </p>
     </div>
   );
 }
