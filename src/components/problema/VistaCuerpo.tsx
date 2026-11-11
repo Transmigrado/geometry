@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { CajaPlegable } from "./CajaPlegable";
+import { CilindroPlegable } from "./CilindroPlegable";
 import { esCaja, huella, medidasDeCaja, type Cuerpo } from "@/lib/cuerpos";
 
 type Props = {
@@ -40,6 +41,19 @@ export function VistaCuerpo({
     );
   }
 
+  if (cuerpo.tipo === "cilindro") {
+    return (
+      <CilindroPlegable
+        radio={cuerpo.radio * escala}
+        altura={cuerpo.altura * escala}
+        color={color}
+        colorClaro={colorClaro}
+        armado={armado}
+        desarmable={desarmable}
+      />
+    );
+  }
+
   const medida = huella(cuerpo, desarmable);
 
   return (
@@ -48,30 +62,12 @@ export function VistaCuerpo({
       style={{ width: medida.ancho * escala, height: medida.alto * escala }}
     >
       <Capa opacidad={desarmable ? armado : 1}>
-        {cuerpo.tipo === "esfera" ? (
-          <Esfera radio={cuerpo.radio * escala} color={color} />
-        ) : (
-          <Cilindro
-            radio={cuerpo.radio * escala}
-            altura={cuerpo.altura * escala}
-            color={color}
-            colorClaro={colorClaro}
-          />
-        )}
+        <Esfera radio={cuerpo.radio * escala} color={color} />
       </Capa>
 
       {desarmable && (
         <Capa opacidad={1 - armado}>
-          {cuerpo.tipo === "esfera" ? (
-            <DesarmeEsfera radio={cuerpo.radio * escala} color={color} />
-          ) : (
-            <DesarmeCilindro
-              radio={cuerpo.radio * escala}
-              altura={cuerpo.altura * escala}
-              color={color}
-              colorClaro={colorClaro}
-            />
-          )}
+          <DesarmeEsfera radio={cuerpo.radio * escala} color={color} />
         </Capa>
       )}
     </div>
@@ -124,74 +120,6 @@ function Esfera({ radio, color }: { radio: number; color: string }) {
         stroke="rgba(15,23,42,.35)"
       />
     </svg>
-  );
-}
-
-function Cilindro({
-  radio,
-  altura,
-  color,
-  colorClaro,
-}: {
-  radio: number;
-  altura: number;
-  color: string;
-  colorClaro: string;
-}) {
-  const ry = radio * 0.3;
-  const ancho = radio * 2;
-
-  return (
-    <svg width={ancho} height={altura + ry * 2}>
-      <path
-        d={`M 0 ${ry} L 0 ${ry + altura} A ${radio} ${ry} 0 0 0 ${ancho} ${
-          ry + altura
-        } L ${ancho} ${ry} Z`}
-        fill={color}
-        stroke="rgba(15,23,42,.35)"
-      />
-      <ellipse
-        cx={radio}
-        cy={ry}
-        rx={radio}
-        ry={ry}
-        fill={colorClaro}
-        stroke="rgba(15,23,42,.35)"
-      />
-    </svg>
-  );
-}
-
-/** La pared del cilindro se desenrolla: queda un rectángulo y dos círculos. */
-function DesarmeCilindro({
-  radio,
-  altura,
-  color,
-  colorClaro,
-}: {
-  radio: number;
-  altura: number;
-  color: string;
-  colorClaro: string;
-}) {
-  const contorno = 2 * Math.PI * radio;
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <Circulo radio={radio} color={colorClaro} />
-      <div
-        className="flex items-center justify-center text-xs font-bold text-slate-700/70"
-        style={{
-          width: contorno,
-          height: altura,
-          background: color,
-          outline: "1px solid rgba(15,23,42,.35)",
-        }}
-      >
-        la pared enrollada
-      </div>
-      <Circulo radio={radio} color={colorClaro} />
-    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { tono } from "@/lib/color";
 import type { ConteoVolumen } from "@/lib/problema";
 
 type Props = {
@@ -12,15 +13,6 @@ type Props = {
 };
 
 const COS30 = Math.cos(Math.PI / 6);
-
-/** Aclara u oscurece el color sin transparencia, para que no se vea a través. */
-function tono(hex: string, factor: number) {
-  const entero = parseInt(hex.slice(1), 16);
-  const canal = (desplazamiento: number) =>
-    Math.round(Math.min(255, ((entero >> desplazamiento) & 255) * factor));
-
-  return `rgb(${canal(16)}, ${canal(8)}, ${canal(0)})`;
-}
 
 /** Dibuja los cubitos que caben dentro de la caja, en vista isométrica. */
 export function CubosApilados({ conteo, capas, lado, color }: Props) {
