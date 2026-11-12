@@ -10,6 +10,7 @@ import {
 } from "@react-three/drei";
 import {
   AnimationMixer,
+  DoubleSide,
   MeshStandardMaterial,
   NearestFilter,
   SkinnedMesh,
@@ -130,7 +131,14 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     mapa.colorSpace = SRGBColorSpace;
     mapa.needsUpdate = true;
 
-    return new MeshStandardMaterial({ map: mapa, roughness: 0.9 });
+    // a dos caras: las piezas del pack son láminas sin grosor, así que
+    // mirando el pelo o una manga por dentro no habría nada que dibujar y
+    // se vería el fondo a través
+    return new MeshStandardMaterial({
+      map: mapa,
+      roughness: 0.9,
+      side: DoubleSide,
+    });
   }, [paleta]);
 
   /** Cuerpo, ropa y esqueleto salen del mismo archivo y de un solo

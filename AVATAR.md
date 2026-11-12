@@ -62,6 +62,13 @@ extraerla, las tres silenciosas:
 celda es un color. El filtro va en `NearestFilter` a propósito, porque si
 interpola, los colores se mezclan en los bordes de cada celda.
 
+**Y se dibuja a dos caras.** Las piezas del pack son láminas sin grosor: el
+pelo, una manga o la copa de una gorra no tienen cara interior. Con el
+descarte de caras traseras por defecto, mirarlas desde dentro no dibuja
+nada y se ve el fondo a través. Cuesta algo de relleno, porque ya no se
+descarta la mitad de los triángulos, pero es lo que hace que una gorra
+parezca una gorra y no una cáscara.
+
 **No hay catálogo de piezas.** La lista sale del propio GLB: cada nodo se
 llama `Top_GamerCitizen_20`, igual que su icono, así que el modelo y su
 imagen se enlazan solos.
