@@ -179,3 +179,71 @@ export function calzar(
 
   return ajustada;
 }
+
+/**
+ * Quita del cuerpo los triángulos que la ropa tapa. Empujar la piel hacia
+ * dentro no alcanza: hundirla lo justo para que no asome por un muslo le
+ * abre un cráter en la cintura, y hundirla poco la deja asomando. Lo que no
+ * existe, en cambio, no puede atravesar nada por mucho que la animación
+ * separe la piel de la tela.
+ *
+ * Tapado es que el rayo encuentre tela en esa dirección, delante o detrás
+ * del propio vértice: delante significa que la piel ya se está saliendo,
+ * detrás que la tela la cubre. Un triángulo se va solo si sus tres vértices
+ * lo están, así que el agujero siempre queda por dentro del borde de la
+ * prenda y nunca asoma.
+ */
+export function recortar(
+  cuerpo: BufferGeometry,
+  anclas: Float32Array,
+  prendas: BufferGeometry[],
+  margen: number,
+): BufferGeometry {
+  const posicion = cuerpo.getAttribute("position");
+  if (!prendas.length) return cuerpo;
+
+  const tapado = new Uint8Array(posicion.count);
+  rayo.firstHitOnly = true;
+
+  for (const prenda of prendas) {
+    if (!prenda.boundsTree) prenda.computeBoundsTree();
+    const barrera = new Mesh(prenda, new MeshBasicMaterial({ side: DoubleSide }));
+
+    for (let i = 0; i < posicion.count; i += 1) {
+      if (tapado[i]) continue;
+
+      desde.set(anclas[i * 3], anclas[i * 3 + 1], anclas[i * 3 + 2]);
+      punto.set(posicion.getX(i), posicion.getY(i), posicion.getZ(i));
+      hacia.subVectors(punto, desde);
+
+      const largo = hacia.length();
+      if (largo < 1e-4) continue;
+      hacia.divideScalar(largo);
+
+      rayo.set(desde, hacia);
+      rayo.far = largo + margen;
+
+      if (rayo.intersectObject(barrera, false).length) tapado[i] = 1;
+    }
+  }
+
+  const indice = cuerpo.getIndex();
+  const caras = indice ? indice.count : posicion.count;
+  const quedan: number[] = [];
+
+  for (let t = 0; t < caras; t += 3) {
+    const a = indice ? indice.getX(t) : t;
+    const b = indice ? indice.getX(t + 1) : t + 1;
+    const c = indice ? indice.getX(t + 2) : t + 2;
+
+    if (tapado[a] && tapado[b] && tapado[c]) continue;
+    quedan.push(a, b, c);
+  }
+
+  if (quedan.length === caras) return cuerpo;
+
+  const recortado = cuerpo.clone();
+  recortado.setIndex(quedan);
+
+  return recortado;
+}

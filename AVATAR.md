@@ -133,13 +133,27 @@ Buscar el punto del cuerpo del que nace cada vértice es lo caro, pero no
 cambia nunca y se guarda. Los rayos van por BVH (`three-mesh-bvh`), porque
 sin él cada uno recorrería miles de triángulos.
 
-**Y la piel se hunde bajo la ropa.** En reposo cada prenda queda justo por
-fuera, pero la piel y la tela tienen pesos de esqueleto distintos: al
-animarse se deforman cada una por su lado y la piel asoma por el hombro, por
-el tobillo o por la costura. Así que donde hay prenda a menos de 12 mm, la
-piel se mete hacia adentro —y se mete menos cuanto más lejos está la prenda,
-para que no quede ningún escalón a la vista—. Es la misma idea del calce,
-pero con el cuerpo como la capa de más adentro.
+**A la piel se le quita lo que la ropa tapa** (`recortar`). Hace falta
+porque piel y tela tienen pesos de esqueleto distintos: al animarse se
+deforman cada una por su lado y la piel asoma por el hombro, por el muslo o
+por la costura. Empujarla hacia dentro no sirve —hundirla lo justo para que
+no asome un muslo le abre un cráter en la cintura, y hundirla poco la deja
+asomando—, pero lo que no existe no puede atravesar nada.
+
+Tapado es que el rayo encuentre tela en esa dirección, delante o detrás del
+propio vértice: delante significa que la piel ya se está saliendo, detrás
+que la tela la cubre. Las anclas no salen de otra malla sino de la propia
+piel, metiendo cada vértice 5 cm hacia dentro por su normal
+(`anclasDentro`). Un triángulo se va sólo si sus tres vértices están
+tapados, así que el agujero queda siempre por dentro del borde de la prenda.
+
+Los triángulos del borde, con algún vértice tapado y otro no, sobreviven a
+propósito y se acomodan con el mismo calce de las prendas, pero de
+milímetros: dos centímetros, que es lo que se usa entre prendas, le abrirían
+ese cráter a la silueta.
+
+Entre las dos pasadas son unos 25 ms al cambiar de prenda, y el cuerpo
+vestido baja de 3.992 a unos 3.100 triángulos.
 
 ## Las reglas entre prendas
 

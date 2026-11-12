@@ -21,7 +21,7 @@ import {
   type WebGLRenderer,
 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { anclasDe, anclasDentroDe, calzar } from "@/lib/calce";
+import { anclasDe, anclasDentroDe, calzar, recortar } from "@/lib/calce";
 import { COLORES_ROPA, PIELES } from "@/lib/paleta";
 import { celdaPrincipal, mudarCelda, type Celda } from "@/lib/uv";
 import {
@@ -50,6 +50,22 @@ const ALTURA_CABEZA = 1.2;
  * del peto más de lo que parece— sin llegar a la otra cara del miembro.
  */
 const HONDURA_PIEL = 0.05;
+
+/**
+ * Y hasta cuánto más allá del propio vértice se busca tela para darlo por
+ * tapado. Con poco margen se escapan los puntos donde la prenda va suelta;
+ * con demasiado, la tela de la espalda daría por tapado el pecho.
+ */
+const ALCANCE_PIEL = 0.02;
+
+/**
+ * Lo que se mete bajo la tela la piel que sobrevive al recorte. Son los
+ * triángulos del borde, con algún vértice tapado y algún otro no, que el
+ * recorte deja a propósito para no abrir el agujero más de la cuenta.
+ * Milímetros: hundirlos dos centímetros, como se hace entre prendas, le
+ * abriría un cráter a la silueta.
+ */
+const HOLGURA_PIEL = 0.004;
 
 /**
  * Cuánto se mete la prenda de dentro por debajo de la de fuera. Dos
@@ -230,24 +246,22 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
   }, [atuendo.piezas, calzadas, tapadosClave]);
 
   /**
-   * La piel, metida bajo lo que lleve puesto. Es el mismo calce de las
-   * prendas, con el cuerpo como la capa de más adentro: a cada vértice se le
-   * tira un rayo desde dentro hacia fuera, y si encuentra tela, la piel se
-   * queda justo por debajo.
+   * La piel, sin los trozos que la ropa tapa y con los del borde metidos
+   * bajo la tela. Lo que se quita no puede asomar por mucho que la
+   * animación separe la piel de la prenda; lo que queda, se acomoda.
    */
   const cuerpo = useMemo(() => {
     const base = piel ? geometriaBase(piel) : null;
     if (!base) return null;
 
     const anclas = anclasDentroDe(base, HONDURA_PIEL);
-    const reloj = performance.now();
-    const salida = puestas.reduce(
+    const recortada = recortar(base, anclas, puestas, ALCANCE_PIEL);
+
+    return puestas.reduce(
       (piel, prenda) =>
-        calzar(piel, anclas, prenda, { hueco: HOLGURA, minimo: PEGADO }),
-      base,
+        calzar(piel, anclas, prenda, { hueco: HOLGURA_PIEL, minimo: PEGADO }),
+      recortada,
     );
-    console.log("[PIEL]", Math.round(performance.now() - reloj), "ms,", base.getAttribute("position").count, "vertices,", puestas.length, "prendas");
-    return salida;
   }, [piel, puestas]);
 
   /**
