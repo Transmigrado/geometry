@@ -7,6 +7,9 @@ calcularlas. Tiene dos módulos:
 - **Ecuaciones**: descubrir cuánto pesa cada fruta mirando una pesa, que es
   una ecuación de primer grado contada con dibujos.
 
+Cada usuario tiene además su **avatar en 3D**, hecho con un creador de Unity
+que vive aparte: ver [UNITY.md](UNITY.md).
+
 ## Geometría
 
 Dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto volumen

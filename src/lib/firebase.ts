@@ -1,5 +1,6 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 const configuracion = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,8 +19,8 @@ export function hayConfiguracion() {
 }
 
 /** Firebase se despierta tarde, solo cuando el navegador lo necesita. */
-export function autenticacion(): Auth {
-  const app = getApps().length
+function aplicacion(): FirebaseApp {
+  return getApps().length
     ? getApp()
     : initializeApp({
         apiKey: configuracion.apiKey!,
@@ -29,6 +30,12 @@ export function autenticacion(): Auth {
         messagingSenderId: configuracion.messagingSenderId,
         appId: configuracion.appId!,
       });
+}
 
-  return getAuth(app);
+export function autenticacion(): Auth {
+  return getAuth(aplicacion());
+}
+
+export function baseDeDatos(): Firestore {
+  return getFirestore(aplicacion());
 }

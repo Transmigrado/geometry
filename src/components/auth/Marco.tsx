@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarraSesion } from "./BarraSesion";
 import { useSesion } from "./ProveedorSesion";
+import { Avatar } from "@/components/avatar/Avatar";
 
 /**
  * La cabecera y el pie solo acompañan a quien ya entró: el login ocupa la
@@ -27,7 +28,10 @@ export function Marco({ children }: { children: React.ReactNode }) {
             <Modulo href="/ecuaciones" nombre="Ecuaciones" />
           </nav>
 
-          <BarraSesion />
+          <div className="flex items-center gap-3">
+            <Avatar />
+            <BarraSesion />
+          </div>
         </div>
       </header>
 
