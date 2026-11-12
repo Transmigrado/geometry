@@ -16,6 +16,7 @@ import {
   type Mesh,
   type WebGLRenderer,
 } from "three";
+import { anclasDe, calzar } from "@/lib/calce";
 import { COLORES_ROPA, PIELES } from "@/lib/paleta";
 import { celdaPrincipal, mudarCelda, type Celda } from "@/lib/uv";
 import {
@@ -35,6 +36,23 @@ const DRACO = "/draco/";
  * uno que baje de esta otra trae botas: entonces tapan gorro y zapatos. */
 const ALTURA_CAPUCHA = 0.85;
 const ALTURA_BOTAS = 0.03;
+/** de aquí para arriba empieza la cabeza, que es lo que tapa una capucha */
+const ALTURA_CABEZA = 1.2;
+
+/** Qué se mete bajo qué, con cuánto aire, tal como lo hace el pack. */
+const CALCES: {
+  dentro: Slot;
+  fuera: Slot;
+  hueco: number;
+  minimo: number;
+  soloArriba?: boolean;
+}[] = [
+  { dentro: "Bottom", fuera: "Shoes", hueco: 0.003, minimo: 0.002 },
+  { dentro: "Bottom", fuera: "Top", hueco: 0.004, minimo: 0.003 },
+  { dentro: "Headwear", fuera: "Top", hueco: 0.004, minimo: 0.004, soloArriba: true },
+  { dentro: "Hair", fuera: "Headwear", hueco: 0.004, minimo: 0.002 },
+  { dentro: "Hair", fuera: "Top", hueco: 0.004, minimo: 0.002, soloArriba: true },
+];
 
 type Props = {
   atuendo: Atuendo;
@@ -123,6 +141,35 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
   };
 
   const tapados = aQueTapa(puesto("Top"), piel);
+  const tapadosClave = tapados.join();
+
+  /** Las prendas se acomodan unas bajo otras antes de pintarlas. */
+  const calzadas = useMemo(() => {
+    const ajustadas = new Map<Slot, BufferGeometry>();
+    const cuerpo = piel?.geometry;
+    if (!cuerpo) return ajustadas;
+
+    const original = (slot: Slot) =>
+      tapados.includes(slot) ? null : (puesto(slot)?.geometry ?? null);
+
+    for (const { dentro, fuera, hueco, minimo, soloArriba } of CALCES) {
+      const interior = original(dentro);
+      const exterior = original(fuera);
+      if (!interior || !exterior) continue;
+
+      ajustadas.set(
+        dentro,
+        calzar(ajustadas.get(dentro) ?? interior, anclasDe(interior, cuerpo), exterior, {
+          hueco,
+          minimo,
+          solo: soloArriba ? (altura) => altura > ALTURA_CABEZA : undefined,
+        }),
+      );
+    }
+
+    return ajustadas;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atuendo.piezas, piel, tapadosClave]);
 
   return (
     <group>
@@ -136,6 +183,7 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
           <Pieza
             key={slot}
             malla={puesto(slot)}
+            calzada={calzadas.get(slot)}
             material={material}
             piel={cambioDePiel}
             color={
@@ -178,19 +226,22 @@ function aQueTapa(top: Mesh | null, cuerpo: Mesh | undefined): Slot[] {
 
 function Pieza({
   malla,
+  calzada,
   material,
   piel,
   color,
 }: {
   malla: Mesh | null | undefined;
+  calzada?: BufferGeometry;
   material: MeshStandardMaterial;
   piel: { desde: Celda; hasta: Celda } | null;
   color?: Celda | null;
 }) {
   const geometria = useMemo(() => {
-    if (!malla?.geometry) return null;
-    return recolorear(malla.geometry, piel, color ?? null);
-  }, [malla, piel, color]);
+    const base = calzada ?? malla?.geometry;
+    if (!base) return null;
+    return recolorear(base, piel, color ?? null);
+  }, [malla, calzada, piel, color]);
 
   if (!malla || !geometria) return null;
 

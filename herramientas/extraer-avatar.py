@@ -36,7 +36,9 @@ def soltar(malla):
     bpy.context.view_layer.objects.active = malla
     if malla.parent:
         bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    # todo queda en coordenadas absolutas: así el calce entre prendas puede
+    # lanzar rayos sin andar convirtiendo de un espacio a otro
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
 
 def exportar(objetos, salida):

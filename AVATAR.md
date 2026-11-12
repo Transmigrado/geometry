@@ -61,19 +61,38 @@ En Firestore, dentro del perfil del usuario: qué pieza lleva en cada slot,
 más una foto de 128×128 sacada del propio lienzo al guardar. Esa foto es la
 que se ve en la cabecera, para no cargar el 3D en toda la app.
 
-## Pendiente
+## Los colores
 
-**Los colores.** El pack ofrece 8 tonos de piel y 15 colores de ropa, y los
-aplica desplazando las UV de la pieza a otra celda de la misma paleta
-(`SetColor` en `CitizenOutfit.cs`). Es replicable aquí: hay que encontrar la
-celda dominante de la malla y moverla a la celda elegida, leyendo la lista de
-celdas desde `Wardrobe/CitizenWardrobe.asset`.
+8 tonos de piel y 15 de ropa, que salen del propio pack
+(`herramientas/` los vuelca a `src/lib/paleta.ts`). Cambiar de color es
+mover las UV de la pieza a otra celda de la paleta, conservando la altura
+dentro de la celda, que es donde vive el sombreado (`src/lib/uv.ts`).
 
-**El calce entre piezas.** El pack deforma los vértices para meter la prenda
-interior bajo la exterior: el pantalón dentro de la polera y los zapatos, el
-pelo dentro de los gorros. Aquí no está replicado, así que alguna combinación
-puede cruzarse.
+La celda que se reemplaza es la que más superficie ocupa en la malla, y
+para medirla sólo cuentan los triángulos enteros dentro de una celda, para
+no confundirse con los que cruzan de un color a otro.
 
-**Las reglas de combinación**, que tampoco están: los gorros se ocultan con
-un top con capucha, los atuendos con botas anulan el slot de zapatos, y los
-overoles son conjunto completo.
+El tono de piel se aplica a **todas** las piezas, no sólo al cuerpo, porque
+las prendas incluyen brazos y cuello. Donde ambas coinciden manda la ropa.
+
+## El calce
+
+Las prendas se meten unas bajo otras como en el pack (`src/lib/calce.ts`):
+a cada vértice de la prenda interior se le tira un rayo desde el cuerpo
+hacia él, y si en el camino aparece la prenda exterior, el vértice se queda
+justo por dentro. Así el pantalón entra en la polera y el pelo bajo el
+gorro, sin cruzarse.
+
+Buscar el punto del cuerpo del que nace cada vértice es lo caro, pero no
+cambia nunca y se guarda. Los rayos van por BVH (`three-mesh-bvh`), porque
+sin él cada uno recorrería miles de triángulos.
+
+## Las reglas entre prendas
+
+No hacen falta marcas en los datos, salvo una:
+
+- Un vestido o un overol viene marcado `onePiece` en el pack, y entonces no
+  lleva pantalón; al elegir uno, la polera vuelve a ser normal.
+- Lo demás se deduce del tamaño de la prenda, igual que en el pack: un top
+  que llega a la cabeza trae capucha y tapa el gorro, y uno que llega al
+  suelo trae botas y tapa los zapatos.
