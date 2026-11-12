@@ -8,9 +8,11 @@ import { useSesion } from "@/components/auth/ProveedorSesion";
 import { guardarPerfil, leerPerfil } from "@/lib/perfil";
 import {
   archivoDe,
+  ATUENDO_INICIAL,
   atuendoDe,
   iconoDe,
   NOMBRE_SLOT,
+  OBLIGATORIOS,
   SLOTS,
   type Atuendo,
   type Slot,
@@ -24,7 +26,7 @@ export function SelectorAvatar() {
   const { usuario } = useSesion();
   const renderizador = useRef<WebGLRenderer | null>(null);
 
-  const [atuendo, setAtuendo] = useState<Atuendo>({});
+  const [atuendo, setAtuendo] = useState<Atuendo>(ATUENDO_INICIAL);
   const [slot, setSlot] = useState<Slot>("Hair");
   const [aviso, setAviso] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -151,6 +153,7 @@ function Piezas({
 
   return (
     <ul className="grid max-h-[26rem] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 lg:grid-cols-3">
+      {!OBLIGATORIOS.includes(slot) && (
       <li>
         <button
           type="button"
@@ -165,6 +168,7 @@ function Piezas({
           Ninguno
         </button>
       </li>
+      )}
 
       {piezas.map((pieza) => (
         <li key={pieza}>

@@ -42,8 +42,18 @@ interpola, los colores se mezclan en los bordes de cada celda.
 
 **No hay catálogo de piezas.** La lista sale de los propios GLB: cada nodo se
 llama `Top_GamerCitizen_20`, igual que su icono, así que el modelo y su
-imagen se enlazan solos. De las 244 piezas, 32 no traen icono en el pack: esas
-se muestran por su nombre.
+imagen se enlazan solos.
+
+**El icono decide qué entra.** El vestuario modular son 214 piezas y todas
+tienen icono; las demás mallas pertenecen a Boy 01, Boy 02 y Girl 01, que son
+modelos clásicos con atuendo fijo y no se combinan. Por eso el script sólo
+exporta las que tienen icono, y el resultado da 214 exactas: Hair 53,
+Headwear 18, Top 60, Bottom 40, Shoes 43.
+
+**La polera y el pantalón no se pueden sacar.** La guía del pack dice que un
+citizen nunca queda sin ropa: `Top_Basic` y `Bottom_Basic` son el atuendo de
+partida y esos dos slots no ofrecen «Ninguno». Las dos piezas básicas viven
+en `Wardrobe/Basic/BasicOutfit.fbx`, aparte de los citizens.
 
 ## Lo que se guarda
 
@@ -53,8 +63,17 @@ que se ve en la cabecera, para no cargar el 3D en toda la app.
 
 ## Pendiente
 
-El pack trae un ajuste que deforma los vértices de una prenda para que calce
-en cuerpos distintos. Aquí no está replicado, porque todas las piezas usan el
-mismo cuerpo base. Si alguna combinación se cruza, el cambio de color por
-paleta también está sin hacer: en el pack es un desplazamiento de las UV
-sobre esa misma textura.
+**Los colores.** El pack ofrece 8 tonos de piel y 15 colores de ropa, y los
+aplica desplazando las UV de la pieza a otra celda de la misma paleta
+(`SetColor` en `CitizenOutfit.cs`). Es replicable aquí: hay que encontrar la
+celda dominante de la malla y moverla a la celda elegida, leyendo la lista de
+celdas desde `Wardrobe/CitizenWardrobe.asset`.
+
+**El calce entre piezas.** El pack deforma los vértices para meter la prenda
+interior bajo la exterior: el pantalón dentro de la polera y los zapatos, el
+pelo dentro de los gorros. Aquí no está replicado, así que alguna combinación
+puede cruzarse.
+
+**Las reglas de combinación**, que tampoco están: los gorros se ocultan con
+un top con capucha, los atuendos con botas anulan el slot de zapatos, y los
+overoles son conjunto completo.

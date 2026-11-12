@@ -18,6 +18,15 @@ export const NOMBRE_SLOT: Record<Slot, string> = {
 export const CUERPO = "/avatar/modelos/cuerpo.glb";
 export const PALETA = "/avatar/modelos/paleta.png";
 
+/** La polera y el pantalón no se pueden sacar: nadie anda desnudo. */
+export const OBLIGATORIOS: Slot[] = ["Top", "Bottom"];
+
+/** Con lo puesto arranca quien nunca guardó nada. */
+export const ATUENDO_INICIAL: Atuendo = {
+  Top: "Top_Basic",
+  Bottom: "Bottom_Basic",
+};
+
 export function archivoDe(slot: Slot) {
   return `/avatar/modelos/${slot.toLowerCase()}.glb`;
 }
@@ -29,7 +38,7 @@ export function iconoDe(pieza: string) {
 
 /** Lee el atuendo guardado sin confiar en lo que venga. */
 export function atuendoDe(json: string | null): Atuendo {
-  if (!json) return {};
+  if (!json) return ATUENDO_INICIAL;
 
   try {
     const datos = JSON.parse(json);
@@ -41,8 +50,8 @@ export function atuendoDe(json: string | null): Atuendo {
       if (typeof pieza === "string") atuendo[slot] = pieza;
     }
 
-    return atuendo;
+    return { ...ATUENDO_INICIAL, ...atuendo };
   } catch {
-    return {};
+    return ATUENDO_INICIAL;
   }
 }

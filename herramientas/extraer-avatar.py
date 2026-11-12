@@ -11,6 +11,15 @@ import bpy
 ORIGEN, DESTINO = sys.argv[-2], sys.argv[-1]
 SLOTS = ["Hair", "Headwear", "Top", "Bottom", "Shoes"]
 
+# El vestuario modular son 214 piezas, y cada una tiene su icono. Las demás
+# son de los tres modelos clásicos, que llevan un atuendo fijo y no se
+# combinan: si no hay icono, la pieza no va.
+ICONOS = os.path.join(ORIGEN, "Wardrobe", "Icons")
+
+
+def del_vestuario(nombre):
+    return os.path.exists(os.path.join(ICONOS, f"{nombre}.png"))
+
 
 def limpiar():
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -60,23 +69,37 @@ print("LISTO cuerpo")
 carpeta = os.path.join(ORIGEN, "Model")
 archivos = sorted(f for f in os.listdir(carpeta) if f.endswith(".fbx"))
 
+# la polera y el pantalón básicos viven aparte, y son los que evitan que un
+# citizen quede sin ropa; sus mallas se llaman al revés: Basic_Top
+BASICO = os.path.join(ORIGEN, "Wardrobe", "Basic", "BasicOutfit.fbx")
+
 for slot in SLOTS:
     limpiar()
     piezas = []
 
-    for archivo in archivos:
-        citizen = archivo[:-4]
-        bpy.ops.import_scene.fbx(filepath=os.path.join(carpeta, archivo))
+    for archivo in archivos + ([os.path.basename(BASICO)] if slot in ("Top", "Bottom") else []):
+        esBasico = archivo == os.path.basename(BASICO)
+        citizen = "Basic" if esBasico else archivo[:-4]
+        bpy.ops.import_scene.fbx(
+            filepath=BASICO if esBasico else os.path.join(carpeta, archivo)
+        )
 
         recien = [o for o in bpy.context.selected_objects if o.type == "MESH"]
         for malla in recien:
             # las mallas vienen como LC20_Top, LC20_Hair, LC20_Body...
-            if not malla.name.split("_")[-1] == slot:
+            # el nombre del icono es Top_GamerCitizen_20.png
+            nombre = f"{slot}_{citizen}"
+            suyo = (
+                malla.name.startswith(f"Basic_{slot}")
+                if esBasico
+                else malla.name.split("_")[-1] == slot
+            )
+            if not suyo or not del_vestuario(nombre):
                 bpy.data.objects.remove(malla, do_unlink=True)
                 continue
+
             soltar(malla)
-            # el nombre del icono es Top_GamerCitizen_20.png
-            malla.name = f"{slot}_{citizen}"
+            malla.name = nombre
             piezas.append(malla)
 
         for sobra in list(bpy.data.objects):

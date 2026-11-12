@@ -34,7 +34,7 @@ export function Escena({ atuendo, alCrear }: Props) {
       dpr={[1, 2]}
       // el personaje mide 1,7 con los pies en el suelo: la cámara lo mira
       // desde su cintura y a distancia suficiente para que entre entero
-      camera={{ position: [0, 0.95, 3.4], fov: 32 }}
+      camera={{ position: [0, 0.95, 3.7], fov: 32 }}
       // sin esto la miniatura sale en negro
       gl={{ preserveDrawingBuffer: true }}
       onCreated={({ gl }) => alCrear?.(gl)}
@@ -54,7 +54,7 @@ export function Escena({ atuendo, alCrear }: Props) {
       <Plataforma />
 
       <OrbitControls
-        target={[0, 0.8, 0]}
+        target={[0, 0.78, 0]}
         enablePan={false}
         minDistance={2}
         maxDistance={5}
