@@ -10,9 +10,11 @@ import {
   type Perfil,
 } from "@/lib/perfil";
 
-/** El build de Unity se exporta con este nombre y se copia en public/avatar. */
+/** El build de Unity, tal como sale exportado, vive en public/avatar. */
 const CARPETA = "/avatar/Build";
-const NOMBRE = "avatar";
+const NOMBRE = "avatar_selector";
+/** viene comprimido con brotli; next.config declara el Content-Encoding */
+const COMPRESION = ".br";
 /** El objeto de la escena que recibe los mensajes desde la web. */
 const OBJETO = "Avatar";
 
@@ -66,6 +68,10 @@ export function CreadorAvatar() {
   useEffect(() => {
     if (!uid) return;
 
+    // en desarrollo React monta dos veces; si la primera instancia llega
+    // tarde hay que despedirla en vez de dejar dos Unity vivos
+    let vigente = true;
+
     const guion = document.createElement("script");
     guion.src = `${CARPETA}/${NOMBRE}.loader.js`;
 
@@ -80,26 +86,33 @@ export function CreadorAvatar() {
         .createUnityInstance(
           lienzo.current,
           {
-            dataUrl: `${CARPETA}/${NOMBRE}.data`,
-            frameworkUrl: `${CARPETA}/${NOMBRE}.framework.js`,
-            codeUrl: `${CARPETA}/${NOMBRE}.wasm`,
+            dataUrl: `${CARPETA}/${NOMBRE}.data${COMPRESION}`,
+            frameworkUrl: `${CARPETA}/${NOMBRE}.framework.js${COMPRESION}`,
+            codeUrl: `${CARPETA}/${NOMBRE}.wasm${COMPRESION}`,
             streamingAssetsUrl: "/avatar/StreamingAssets",
-            companyName: "Materama",
-            productName: "Avatar",
-            productVersion: "1.0",
+            companyName: "DefaultCompany",
+            productName: "Avatar Selector",
+            productVersion: "0.1.0",
           },
           (avance) => setProgreso(avance),
         )
         .then((instancia) => {
+          if (!vigente) {
+            instancia.Quit().catch(() => {});
+            return;
+          }
           unity.current = instancia;
           setEstado("listo");
         })
-        .catch(() => setEstado("falla"));
+        .catch(() => {
+          if (vigente) setEstado("falla");
+        });
     };
 
     document.body.appendChild(guion);
 
     return () => {
+      vigente = false;
       unity.current?.Quit().catch(() => {});
       unity.current = null;
       guion.remove();
@@ -145,7 +158,9 @@ export function CreadorAvatar() {
 
       <section className="overflow-hidden rounded-3xl bg-white p-4 shadow-sm">
         <div className="relative mx-auto aspect-video w-full max-w-3xl overflow-hidden rounded-2xl bg-slate-900">
-          <canvas ref={lienzo} className="h-full w-full" />
+          {/* el id es obligatorio: Unity busca el canvas por selector para
+              engancharle el teclado, y sin id arma un "#" inválido */}
+          <canvas id="unity-canvas" ref={lienzo} className="h-full w-full" />
 
           {estado !== "listo" && (
             <div className="absolute inset-0 flex items-center justify-center p-6 text-center">

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // el build de Unity viene minificado y no es nuestro para arreglarlo
+    "public/**",
   ]),
 ]);
 

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # el ejemplo sí se versiona; .env.local con las claves no
 !.env.local.example
+
+# el build de Unity son 25 MB; se copia aparte, no se versiona
+public/avatar/Build/
