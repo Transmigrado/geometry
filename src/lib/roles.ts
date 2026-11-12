@@ -53,10 +53,11 @@ export const CASA: Record<Rol, string> = {
 
 /** Los módulos del menú, por rol. */
 export const MENU: Record<Rol, { href: string; nombre: string }[]> = {
-  student: [
-    { href: "/", nombre: "Geometría" },
-    { href: "/ecuaciones", nombre: "Ecuaciones" },
-  ],
+  /**
+   * El niño no lleva materias en la cabecera: van a ser muchas y no caben.
+   * Las elige en el tablero del inicio, y vuelve ahí por el logo.
+   */
+  student: [],
   teacher: [{ href: "/profesor", nombre: "Mis cursos" }],
   school: [{ href: "/colegio", nombre: "Mi colegio" }],
   parent: [{ href: "/familia", nombre: "Mi familia" }],
@@ -84,7 +85,9 @@ export function leToca(rol: Rol, ruta: string) {
   if (ruta === "/perfil") return true;
   // el muñeco 3D es cosa de niños; los adultos suben una foto y ya
   if (ruta === "/avatar") return rol === "student";
-  if (rol === "student") return ruta === "/" || ruta === "/ecuaciones";
+  if (rol === "student") {
+    return ruta === "/" || ruta === "/geometria" || ruta === "/ecuaciones";
+  }
 
   // con los colegios apagados nadie es otra cosa que alumno, así que sus
   // paneles quedan cerrados aunque alguien escriba la dirección a mano

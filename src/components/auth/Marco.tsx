@@ -16,10 +16,17 @@ import { MENU, rolDe } from "@/lib/roles";
 export function Marco({ children }: { children: React.ReactNode }) {
   const { usuario } = useSesion();
   const perfil = usePerfil();
+  const donde = usePathname();
 
   if (!usuario || perfil.cargando || pasoPendiente(perfil.perfil)) {
     return <>{children}</>;
   }
+
+  const rol = rolDe(perfil.perfil);
+  const menu = MENU[rol];
+  // el niño no lleva materias en la cabecera, así que necesita una puerta
+  // de vuelta al tablero: el logo no le dice nada a un chico de diez años
+  const volver = rol === "student" && donde !== "/";
 
   return (
     <>
@@ -29,11 +36,22 @@ export function Marco({ children }: { children: React.ReactNode }) {
             📐 Materama
           </Link>
 
-          <nav className="flex gap-2">
-            {MENU[rolDe(perfil.perfil)].map((modulo) => (
-              <Modulo key={modulo.href} {...modulo} />
-            ))}
-          </nav>
+          {volver && (
+            <Link
+              href="/"
+              className="rounded-full bg-sky-100 px-4 py-2 font-bold text-sky-700 transition hover:bg-sky-200"
+            >
+              ← Inicio
+            </Link>
+          )}
+
+          {menu.length > 0 && (
+            <nav className="flex gap-2">
+              {menu.map((modulo) => (
+                <Modulo key={modulo.href} {...modulo} />
+              ))}
+            </nav>
+          )}
 
           <BarraSesion />
         </div>
