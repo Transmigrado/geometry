@@ -16,16 +16,21 @@ const BORDE = "#0369a1";
 export function Figura({
   piezas,
   pintadas,
+  colores,
+  svgRef,
   alTocar,
   bloqueada,
 }: {
   piezas: Pieza[];
   pintadas: Set<string>;
+  colores?: Record<string, string>;
+  svgRef?: React.Ref<SVGSVGElement>;
   alTocar: (id: string) => void;
   bloqueada: boolean;
 }) {
   return (
     <svg
+      ref={svgRef}
       viewBox="0 0 200 200"
       className="h-auto w-full max-w-sm touch-manipulation"
     >
@@ -48,7 +53,7 @@ export function Figura({
                 alTocar(pieza.id);
               }
             }}
-            fill={pintada ? RELLENO : VACIO}
+            fill={pintada ? colores?.[pieza.id] ?? RELLENO : VACIO}
             stroke={BORDE}
             strokeWidth={2}
             strokeLinejoin="round"

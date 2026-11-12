@@ -9,6 +9,7 @@ export function Practica() {
   const [ejercicio, setEjercicio] = useState(PRIMER_EJERCICIO);
   const [elegida, setElegida] = useState<number | null>(null);
   const [resueltos, setResueltos] = useState(0);
+  const [noGuardada, setNoGuardada] = useState(false);
 
   const { fruta, cantidad, peso, extra, total, opciones } = ejercicio;
   const acertada = elegida === null ? null : elegida === peso;
@@ -22,9 +23,10 @@ export function Practica() {
   function responder(opcion: number) {
     if (acertada) return;
     setElegida(opcion);
+    setNoGuardada(false);
     if (opcion === peso) setResueltos(resueltos + 1);
 
-    registrar({
+    void registrar({
       modulo: "equations",
       tema: conPesa ? TEMAS.ecuacionConPesa : TEMAS.ecuacionSimple,
       desafio: conPesa ? "equations.constant" : "equations.simple",
@@ -32,6 +34,8 @@ export function Practica() {
       acierto: opcion === peso,
       error: errorDe(opcion, { cantidad, peso, total, extra }),
       duracion: reloj.ms(),
+    }).then((guardada) => {
+      if (!guardada) setNoGuardada(true);
     });
   }
 
@@ -110,6 +114,12 @@ export function Practica() {
               : `Para encontrarlo repartimos lo que marca la pesa entre las ${fruta.plural}: ${total} ÷ ${cantidad} = ${peso}.`}
           </p>
         </section>
+      )}
+
+      {noGuardada && (
+        <p role="alert" className="rounded-2xl bg-rose-100 p-4 font-bold text-rose-900">
+          No pudimos guardar esta respuesta en tus avances. Puedes seguir jugando, pero no aparecerá en tus estadísticas.
+        </p>
       )}
 
       <button

@@ -34,6 +34,7 @@ const PROFE = "profe1";
 const INTRUSO = "profe2";
 const NINO = "nino1";
 const MADRE = "madre1";
+const HOY = new Date().toISOString().slice(0, 10);
 
 const entorno = await initializeTestEnvironment({
   projectId: "materama-pruebas",
@@ -94,7 +95,14 @@ await entorno.withSecurityRulesDisabled(async (admin) => {
   await setDoc(doc(base, "attempts", "intento1"), {
     studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
     module: "equations", topic: "equations.simple",
+    challenge: "equations.simple", localDate: HOY,
     kind: "answer", correct: true, createdAt: new Date(),
+  });
+
+  await setDoc(doc(base, "daily", `${NINO}_${HOY}`), {
+    studentId: NINO, courseId: CURSO, schoolId: COLEGIO, date: HOY,
+    attempts: 6, correct: 4,
+    byChallenge: { "fractions.mixed": { a: 6, c: 4 } },
   });
 });
 
@@ -178,26 +186,43 @@ console.log("\nLo que el niño sí puede escribir");
 await caso("un intento suyo, bien formado", () =>
   assertSucceeds(setDoc(doc(nino, "attempts", "intento2"), {
     studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
-    module: "equations", topic: "equations.simple",
-    kind: "answer", correct: false, errorKind: "restar",
+    module: "fractions", topic: "fractions.identify",
+    challenge: "fractions.mixed", localDate: HOY,
+    kind: "answer", correct: false, errorKind: "contolaspiezas",
     durationMs: 4200, createdAt: serverTimestamp(),
+  })));
+await caso("pero no uno sin decir qué desafío era", () =>
+  assertFails(setDoc(doc(nino, "attempts", "intentoX"), {
+    studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
+    module: "fractions", topic: "fractions.identify", localDate: HOY,
+    kind: "answer", correct: true, createdAt: serverTimestamp(),
+  })));
+await caso("ni con una fecha inventada", () =>
+  assertFails(setDoc(doc(nino, "attempts", "intentoY"), {
+    studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
+    module: "fractions", topic: "fractions.identify",
+    challenge: "fractions.mixed", localDate: "manana",
+    kind: "answer", correct: true, createdAt: serverTimestamp(),
   })));
 await caso("pero no uno a nombre de otro", () =>
   assertFails(setDoc(doc(nino, "attempts", "intento3"), {
     studentId: "otroNino", courseId: CURSO, schoolId: COLEGIO,
     module: "equations", topic: "equations.simple",
+    challenge: "equations.simple", localDate: HOY,
     kind: "answer", correct: true, createdAt: serverTimestamp(),
   })));
 await caso("ni uno de exploración con acierto", () =>
   assertFails(setDoc(doc(nino, "attempts", "intento4"), {
     studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
     module: "geometry", topic: "geometry.volume",
+    challenge: "equations.simple", localDate: HOY,
     kind: "explore", correct: true, createdAt: serverTimestamp(),
   })));
 await caso("ni colgarlo de un colegio que no es el suyo", () =>
   assertFails(setDoc(doc(nino, "attempts", "intento5"), {
     studentId: NINO, courseId: CURSO, schoolId: OTRO_COLEGIO,
     module: "equations", topic: "equations.simple",
+    challenge: "equations.simple", localDate: HOY,
     kind: "answer", correct: true, createdAt: serverTimestamp(),
   })));
 
@@ -218,6 +243,21 @@ await caso("ni nadie el de un niño que no es suyo", () =>
 await caso("y nadie lo escribe a mano", () =>
   assertFails(setDoc(doc(nino, "progress", `${NINO}_${CURSO}`), {
     studentId: NINO, courseId: CURSO, attempts: 999, correct: 999,
+  })));
+
+console.log("\nLo que hizo cada día");
+const porDia = (quien, campo, valor) =>
+  getDocs(query(collection(quien, "daily"), where(campo, "==", valor)));
+
+await caso("su profesor ve los días de su curso", () =>
+  assertSucceeds(porDia(profe, "courseId", CURSO)));
+await caso("su madre ve los de su hijo", () =>
+  assertSucceeds(porDia(madre, "studentId", NINO)));
+await caso("un profesor ajeno no", () =>
+  assertFails(porDia(intruso, "studentId", NINO)));
+await caso("y nadie los escribe a mano", () =>
+  assertFails(setDoc(doc(nino, "daily", `${NINO}_${HOY}`), {
+    studentId: NINO, date: HOY, attempts: 999, correct: 999,
   })));
 
 console.log("\nMatrículas y tutorías sólo las escribe el servidor");

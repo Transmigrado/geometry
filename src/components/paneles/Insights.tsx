@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "flowbite-react";
 import { NOMBRE_TEMA, type Tema } from "@/lib/metricas";
-import type { Alumno, Progreso } from "@/lib/colegio";
+import type { Alumno, DiaAlumno, Progreso } from "@/lib/colegio";
+import { nombreDeDesafio } from "@/lib/desafios";
 import { Tarjeta, Vacio } from "./piezas";
 
 /**
@@ -163,9 +164,11 @@ export function Insights({
 export function PorAlumno({
   progreso,
   alumnos,
+  dias,
 }: {
   progreso: Progreso[];
   alumnos: Alumno[];
+  dias: DiaAlumno[];
 }) {
   const suyo = new Map(progreso.map((quien) => [quien.alumno, quien]));
 
@@ -179,6 +182,7 @@ export function PorAlumno({
               <TableHeadCell>Ejercicios</TableHeadCell>
               <TableHeadCell>Aciertos</TableHeadCell>
               <TableHeadCell>Última vez</TableHeadCell>
+              <TableHeadCell>Detalle</TableHeadCell>
             </TableRow>
           </TableHead>
           <TableBody className="divide-y">
@@ -206,6 +210,9 @@ export function PorAlumno({
                           .format(cuanto.ultimo)
                       : "Todavía no practica"}
                   </TableCell>
+                  <TableCell>
+                    <ActividadDiaria dias={dias.filter((dia) => dia.alumno === alumno.id)} />
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -213,6 +220,43 @@ export function PorAlumno({
         </Table>
       </div>
     </Tarjeta>
+  );
+}
+
+function ActividadDiaria({ dias }: { dias: DiaAlumno[] }) {
+  if (dias.length === 0) return <span className="text-slate-500">Sin actividad diaria</span>;
+
+  return (
+    <details className="min-w-52">
+      <summary className="cursor-pointer font-bold text-sky-700">
+        Ver por día ({dias.length})
+      </summary>
+      <div className="mt-3 flex flex-col gap-3">
+        {dias.map((dia) => (
+          <section key={`${dia.alumno}-${dia.fecha}`} className="rounded-xl bg-slate-50 p-3">
+            <h3 className="mb-2 font-bold text-slate-700">{fechaEnEspanol(dia.fecha)}</h3>
+            <ul className="flex flex-col gap-2">
+              {Object.entries(dia.porDesafio).map(([id, cuenta]) => (
+                <li key={id} className="flex flex-wrap justify-between gap-x-4 text-sm">
+                  <span className="text-slate-700">{nombreDeDesafio(id)}</span>
+                  <span className="font-semibold text-slate-600">
+                    {cuenta.ejercicios} ejercicios · {cuenta.ejercicios - cuenta.aciertos} fallos
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function fechaEnEspanol(fecha: string) {
+  const [anio, mes, dia] = fecha.split("-").map(Number);
+  if (!anio || !mes || !dia) return fecha;
+  return new Intl.DateTimeFormat("es", { dateStyle: "medium" }).format(
+    new Date(anio, mes - 1, dia, 12),
   );
 }
 

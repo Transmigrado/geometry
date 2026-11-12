@@ -5,9 +5,11 @@ import Link from "next/link";
 import {
   alumnosDe,
   codigoDe,
+  diasDelCurso,
   generarCodigoCurso,
   progresoDelCurso,
   type Alumno,
+  type DiaAlumno,
   type Progreso,
 } from "@/lib/colegio";
 import { Insights, PorAlumno } from "./Insights";
@@ -18,6 +20,7 @@ import {
 export function CursoDetalle({ id }: { id: string }) {
   const [alumnos, setAlumnos] = useState<Alumno[] | null>(null);
   const [progreso, setProgreso] = useState<Progreso[] | null>(null);
+  const [dias, setDias] = useState<DiaAlumno[] | null>(null);
   const [codigo, setCodigo] = useState<
     { codigo: string; caduca: number; vencido: boolean } | null
   >(null);
@@ -27,6 +30,7 @@ export function CursoDetalle({ id }: { id: string }) {
   const recargar = useCallback(() => {
     alumnosDe(id).then(setAlumnos).catch(() => setAlumnos([]));
     progresoDelCurso(id).then(setProgreso).catch(() => setProgreso([]));
+    diasDelCurso(id).then(setDias).catch(() => setDias([]));
     // si vive o no se decide al leerlo, no al pintar: la hora cambia sola
     // y el compilador no quiere funciones impuras durante el render
     codigoDe(id)
@@ -79,7 +83,7 @@ export function CursoDetalle({ id }: { id: string }) {
         <Aviso texto={aviso} />
       </Tarjeta>
 
-      {!alumnos || !progreso ? (
+      {!alumnos || !progreso || !dias ? (
         <Cargando />
       ) : alumnos.length === 0 ? (
         <Tarjeta titulo="Alumnos">
@@ -88,7 +92,7 @@ export function CursoDetalle({ id }: { id: string }) {
       ) : (
         <>
           <Insights progreso={progreso} alumnos={alumnos} />
-          <PorAlumno progreso={progreso} alumnos={alumnos} />
+          <PorAlumno progreso={progreso} alumnos={alumnos} dias={dias} />
         </>
       )}
     </div>

@@ -113,6 +113,28 @@ export const DESAFIOS: Desafio[] = [
       { clave: "triangulos", nombre: "Incluir triángulos", porDefecto: true },
     ],
   },
+  {
+    id: "fractions.addition",
+    modulo: "fractions",
+    tema: "fractions.addition",
+    nombre: "Sumar fracciones",
+    pie: "Junta dos partes y encuentra cómo representarlas en una figura.",
+    ajustes: [
+      { clave: "denominadoresGrandes", nombre: "Incluir denominadores mayores que seis", porDefecto: false },
+      { clave: "figurasCirculares", nombre: "Incluir círculos", porDefecto: true },
+    ],
+  },
+  {
+    id: "fractions.subtraction",
+    modulo: "fractions",
+    tema: "fractions.subtraction",
+    nombre: "Restar fracciones",
+    pie: "Quita una parte de otra y muestra lo que queda.",
+    ajustes: [
+      { clave: "denominadoresGrandes", nombre: "Incluir denominadores mayores que seis", porDefecto: false },
+      { clave: "figurasCirculares", nombre: "Incluir círculos", porDefecto: true },
+    ],
+  },
 ];
 
 const POR_ID = new Map(DESAFIOS.map((cual) => [cual.id, cual]));

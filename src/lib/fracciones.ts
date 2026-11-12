@@ -51,6 +51,14 @@ export function sumar(una: Fraccion, otra: Fraccion): Fraccion {
   });
 }
 
+export function restar(una: Fraccion, otra: Fraccion): Fraccion {
+  return simplificar({
+    numerador:
+      una.numerador * otra.denominador - otra.numerador * una.denominador,
+    denominador: una.denominador * otra.denominador,
+  });
+}
+
 export function iguales(una: Fraccion, otra: Fraccion) {
   const a = simplificar(una);
   const b = simplificar(otra);
@@ -65,6 +73,87 @@ const NADA: Fraccion = { numerador: 0, denominador: 1 };
 
 export function cuantoSuman(piezas: Pieza[]): Fraccion {
   return piezas.reduce((total, pieza) => sumar(total, pieza.valor), NADA);
+}
+
+export type Operacion = "suma" | "resta";
+
+export type EjercicioOperacion = {
+  operacion: Operacion;
+  figura: Figura;
+  primera: Fraccion;
+  segunda: Fraccion;
+  objetivo: Fraccion;
+};
+
+/** Crea una suma o resta que se puede resolver con hasta doce partes. */
+export function nuevoEjercicioOperacion(operacion: Operacion): EjercicioOperacion {
+  const denominadores = [2, 3, 4, 6];
+
+  for (let intento = 0; intento < 100; intento += 1) {
+    let primera = fraccionPropia(denominadores[azar(denominadores.length)]);
+    let segunda = fraccionPropia(denominadores[azar(denominadores.length)]);
+
+    if (operacion === "resta" && primera.numerador * segunda.denominador < segunda.numerador * primera.denominador) {
+      [primera, segunda] = [segunda, primera];
+    }
+
+    const objetivo = operacion === "suma" ? sumar(primera, segunda) : restar(primera, segunda);
+    // Evitamos 0 y 1: la figura debe mostrar una cantidad no trivial.
+    if (objetivo.numerador <= 0 || objetivo.numerador >= objetivo.denominador) continue;
+
+    return {
+      operacion,
+      figura: azar(2) === 0 ? "cuadrado" : "circulo",
+      primera,
+      segunda,
+      objetivo,
+    };
+  }
+
+  // Siempre existe una operación propia y fácil como plan alternativo.
+  return operacion === "suma"
+    ? {
+        operacion,
+        figura: "cuadrado",
+        primera: { numerador: 1, denominador: 4 },
+        segunda: { numerador: 1, denominador: 4 },
+        objetivo: { numerador: 1, denominador: 2 },
+      }
+    : {
+        operacion,
+        figura: "cuadrado",
+        primera: { numerador: 3, denominador: 4 },
+        segunda: { numerador: 1, denominador: 4 },
+        objetivo: { numerador: 1, denominador: 2 },
+      };
+}
+
+function fraccionPropia(denominador: number): Fraccion {
+  return {
+    numerador: 1 + azar(denominador - 1),
+    denominador,
+  };
+}
+
+/** Una partición visual de partes iguales, usada por los tres juegos. */
+export function partirFigura(figura: Figura, cuantas: number): Pieza[] {
+  const total = Math.max(1, Math.min(12, Math.floor(cuantas)));
+  const reparto = figura === "circulo"
+    ? total === 1
+      ? {
+          figura,
+          piezas: [
+            pieza(
+              `M ${CENTRO[0] + RADIO},${CENTRO[1]} A ${RADIO},${RADIO} 0 1,1 ${CENTRO[0] - RADIO},${CENTRO[1]} A ${RADIO},${RADIO} 0 1,1 ${CENTRO[0] + RADIO},${CENTRO[1]} Z`,
+              1,
+              1,
+            ),
+          ],
+        }
+      : porciones(total)
+    : franjas(total, false);
+
+  return reparto.piezas.map((suya, i) => ({ ...suya, id: `p${i}` }));
 }
 
 // ───────────────────────── dibujo ─────────────────────────

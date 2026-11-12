@@ -5,6 +5,9 @@ import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import { IconoProblema } from "@/components/problema/IconoProblema";
 import { IconoBalanza } from "@/components/ecuaciones/IconoBalanza";
 import { IconoFracciones } from "@/components/fracciones/IconoFracciones";
+import { AvancesSemana } from "./AvancesSemana";
+import { useSesion } from "@/components/auth/ProveedorSesion";
+import { rolDe } from "@/lib/roles";
 
 /**
  * El tablero del niño: por dónde quiere empezar hoy.
@@ -57,6 +60,8 @@ const MATERIAS: Materia[] = [
 
 export function Inicio() {
   const { perfil } = usePerfil();
+  const { usuario } = useSesion();
+  const esAlumno = rolDe(perfil) === "student";
 
   return (
     <div className="flex flex-col gap-8">
@@ -94,6 +99,8 @@ export function Inicio() {
           <Pronto />
         </li>
       </ul>
+
+      {esAlumno && usuario && <AvancesSemana alumno={usuario.uid} />}
     </div>
   );
 }

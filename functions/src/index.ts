@@ -399,7 +399,11 @@ export const alGuardarIntento = onDocumentCreated(
     const acumulado = base.doc(
       `progress/${intento.studentId}_${intento.courseId ?? "solo"}`,
     );
-    const delDia = base.doc(`daily/${intento.studentId}_${dia}`);
+    // Un alumno puede estar en más de un curso. Mantener un documento por
+    // curso evita mezclar lo que cada profesor está autorizado a consultar.
+    const delDia = base.doc(
+      `daily/${intento.studentId}_${intento.courseId ?? "solo"}_${dia}`,
+    );
 
     const deQuien = {
       studentId: intento.studentId,

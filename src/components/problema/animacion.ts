@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const CONSULTA = "(prefers-reduced-motion: reduce)";
 
@@ -72,21 +72,18 @@ export function useReproduccion(duracion: number) {
     return () => cancelAnimationFrame(cuadro);
   }, [reproduciendo, duracion, quieto]);
 
-  return {
-    t,
-    reproduciendo,
-    reproducir: () => {
-      if (quieto) {
-        setT(1);
-        return;
-      }
-      setT(0);
-      setReproduciendo(true);
-    },
-    /** mover a mano detiene la reproducción */
-    ir: (valor: number) => {
-      setReproduciendo(false);
-      setT(valor);
-    },
-  };
+  const reproducir = useCallback(() => {
+    if (quieto) {
+      setT(1);
+      return;
+    }
+    setT(0);
+    setReproduciendo(true);
+  }, [quieto]);
+  const ir = useCallback((valor: number) => {
+    setReproduciendo(false);
+    setT(valor);
+  }, []);
+
+  return { t, reproduciendo, reproducir, ir };
 }

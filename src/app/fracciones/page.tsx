@@ -1,15 +1,15 @@
 import { Protegido } from "@/components/auth/Protegido";
-import { Practica } from "@/components/fracciones/Practica";
+import { Juegos } from "@/components/fracciones/Juegos";
 
 export const metadata = {
   title: "Fracciones | Materama",
-  description: "Pinta la parte que te piden y mira si acertaste.",
+  description: "Elige un juego para practicar fracciones.",
 };
 
 export default function FraccionesPage() {
   return (
     <Protegido>
-      <Practica />
+      <Juegos />
     </Protegido>
   );
 }

@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
   query,
   where,
 } from "firebase/firestore";
@@ -219,6 +220,83 @@ export async function progresoDelCurso(courseId: string): Promise<Progreso[]> {
     query(collection(baseDeDatos(), "progress"), where("courseId", "==", courseId)),
   );
   return encontrados.docs.map((suyo) => aProgreso(suyo.data()));
+}
+
+/** Resumen diario del curso, separado por alumno y desafío. */
+export type DiaAlumno = {
+  alumno: string;
+  fecha: string;
+  porDesafio: Record<string, { ejercicios: number; aciertos: number }>;
+};
+
+export async function diasDelCurso(courseId: string): Promise<DiaAlumno[]> {
+  const encontrados = await getDocs(
+    query(
+      collection(baseDeDatos(), "daily"),
+      where("courseId", "==", courseId),
+      orderBy("date", "desc"),
+    ),
+  );
+
+  return encontrados.docs.map((documento) => {
+    const datos = documento.data();
+    const porDesafio: DiaAlumno["porDesafio"] = {};
+    const desafios = (datos.byChallenge ?? {}) as Record<string, { a?: number; c?: number }>;
+
+    for (const [id, cuenta] of Object.entries(desafios)) {
+      porDesafio[id] = {
+        ejercicios: Number(cuenta?.a ?? 0),
+        aciertos: Number(cuenta?.c ?? 0),
+      };
+    }
+
+    return {
+      alumno: String(datos.studentId ?? ""),
+      fecha: String(datos.date ?? ""),
+      porDesafio,
+    };
+  });
+}
+
+/** Las respuestas recientes del alumno, sumando sus cursos. */
+export async function diasDelAlumno(studentId: string): Promise<DiaAlumno[]> {
+  const ahora = new Date();
+  const fin = fechaISO(ahora);
+  const inicioDate = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 6);
+  const inicio = fechaISO(inicioDate);
+  // Consultamos los intentos crudos para que el tablero del alumno no
+  // dependa de que el trigger de agregación diaria ya se haya ejecutado.
+  // Filtrar por alumno usa el índice simple de Firestore y evita depender
+  // de un índice compuesto que quizá todavía no esté publicado.
+  const encontrados = await getDocs(
+    query(
+      collection(baseDeDatos(), "attempts"),
+      where("studentId", "==", studentId),
+    ),
+  );
+
+  const agrupados = new Map<string, DiaAlumno>();
+  for (const documento of encontrados.docs) {
+    const datos = documento.data();
+    const fecha = String(datos.localDate ?? "");
+    const id = String(datos.challenge ?? "");
+    if (datos.kind !== "answer" || fecha < inicio || fecha > fin || !id) continue;
+
+    const dia = agrupados.get(fecha) ?? { alumno: studentId, fecha, porDesafio: {} };
+    const antes = dia.porDesafio[id] ?? { ejercicios: 0, aciertos: 0 };
+    dia.porDesafio[id] = {
+      ejercicios: antes.ejercicios + 1,
+      aciertos: antes.aciertos + (datos.correct === true ? 1 : 0),
+    };
+    agrupados.set(fecha, dia);
+  }
+
+  return [...agrupados.values()].sort((uno, otro) => otro.fecha.localeCompare(uno.fecha));
+}
+
+function fechaISO(fecha: Date) {
+  const dos = (numero: number) => String(numero).padStart(2, "0");
+  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
 }
 
 /** El progreso de un alumno, mire quien mire. */

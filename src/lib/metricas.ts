@@ -39,6 +39,8 @@ export const TEMAS = {
   ecuacionSimple: "equations.simple",
   ecuacionConPesa: "equations.withconstant",
   fraccionIdentificar: "fractions.identify",
+  fraccionSuma: "fractions.addition",
+  fraccionResta: "fractions.subtraction",
 } as const;
 
 export type Tema = (typeof TEMAS)[keyof typeof TEMAS];
@@ -50,6 +52,8 @@ export const NOMBRE_TEMA: Record<Tema, string> = {
   "equations.simple": "Ecuaciones simples",
   "equations.withconstant": "Ecuaciones con pesa",
   "fractions.identify": "Reconocer fracciones",
+  "fractions.addition": "Sumar fracciones",
+  "fractions.subtraction": "Restar fracciones",
 };
 
 /** El tema de un problema de geometría, según su tipo. */
@@ -165,11 +169,11 @@ type Intento = {
  * silencio. Que no se guarde una métrica no es motivo para romperle el
  * ejercicio a un niño.
  */
-export async function registrar(intento: Intento) {
-  if (!hayConfiguracion()) return;
+export async function registrar(intento: Intento): Promise<boolean> {
+  if (!hayConfiguracion()) return false;
 
   const quien = autenticacion().currentUser;
-  if (!quien) return;
+  if (!quien) return false;
 
   try {
     const curso = await cursoDe(quien.uid);
@@ -188,8 +192,12 @@ export async function registrar(intento: Intento) {
       ...(intento.duracion ? { durationMs: Math.round(intento.duracion) } : {}),
       createdAt: serverTimestamp(),
     });
-  } catch {
-    // ni un aviso: esto es de fondo
+    return true;
+  } catch (falla) {
+    // El registro sigue sin interrumpir el ejercicio, pero dejamos visible
+    // la causa para poder detectar si las reglas o la conexión lo rechazan.
+    console.error("No pudimos guardar la respuesta del alumno.", falla);
+    return false;
   }
 }
 

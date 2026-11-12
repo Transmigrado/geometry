@@ -91,8 +91,9 @@ cada cara de A y el llenado capa por capa con cubitos.
 
 ## Fracciones
 
-Se enseña una figura —cuadrado, tarta o triángulo— partida en piezas, y se
-pide pintar una fracción: «pinta 1/2 de este cuadrado».
+Hay tres juegos. En **Pintar una fracción** se enseña una figura —cuadrado,
+tarta o triángulo— partida en piezas, y se pide pintar una fracción: «pinta
+1/2 de este cuadrado».
 
 Lo que hace que esto enseñe algo es que **las piezas no siempre valen lo
 mismo**. Un cuadrado en tres franjas con una de ellas partida tiene piezas
@@ -103,6 +104,12 @@ tres ejercicios son de ésos.
 Por eso **hay varias respuestas correctas** y se comprueba la suma, no el
 conjunto elegido: en una tarta de cuatro porciones con una partida, 1/2 son
 dos porciones enteras, o una entera y las dos mitades.
+
+En **Sumar fracciones** y **Restar fracciones** se ven las dos fracciones
+con sus propias figuras pintadas y, tras el signo igual, una figura vacía.
+El alumno elige en cuántas partes iguales dividirla, pinta el resultado y
+confirma. El divisor puede ajustarse hasta que las piezas representen el
+resultado exacto.
 
 Todo se lleva con fracciones exactas y no con decimales. 1/3 no existe en
 coma flotante, y «¿esto suma justo un medio?» tiene que tener una respuesta
