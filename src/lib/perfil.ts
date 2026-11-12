@@ -152,21 +152,3 @@ export function fechaLarga(nacimiento: string | null): string | null {
 
   return new Intl.DateTimeFormat("es", { dateStyle: "long" }).format(dia);
 }
-
-/**
- * Si el avatar trae una miniatura adentro la sacamos para mostrarla; el
- * resto del JSON no lo tocamos, es cosa del selector.
- */
-export function miniaturaDe(avatar: string | null): string | null {
-  if (!avatar) return null;
-
-  try {
-    const datos = JSON.parse(avatar);
-    const foto = datos?.miniatura;
-    return typeof foto === "string" && foto.startsWith("data:image")
-      ? foto
-      : null;
-  } catch {
-    return null;
-  }
-}

@@ -37,6 +37,14 @@ En Firestore los campos van en inglés, por convención: `name`, `lastName`,
 app el perfil habla español como todo lo demás, y la traducción vive sólo en
 `src/lib/perfil.ts`.
 
+`avatar` guarda el atuendo —`pieces`, `skin`, `colors`— y nada más: la foto
+vive sólo en `thumbnail`. Antes iba también metida dentro del atuendo, y
+como pesa unos 19 KB contra los 227 bytes del resto, el documento era casi
+el doble de grande para nada. Los nombres de los slots (`Top`, `Bottom`,
+`Hair`…) no se traducen: son los del pack, y con ellos se llaman también las
+mallas y los iconos. La traducción del atuendo vive en
+`src/lib/vestuario.ts`.
+
 ## Geometría
 
 Dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto volumen

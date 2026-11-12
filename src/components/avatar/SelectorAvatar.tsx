@@ -12,6 +12,7 @@ import {
   AVATAR,
   ATUENDO_INICIAL,
   atuendoDe,
+  comoJson,
   iconoDe,
   NOMBRE_SLOT,
   OBLIGATORIOS,
@@ -76,10 +77,11 @@ export function SelectorAvatar({
     setGuardando(true);
     setAviso(null);
     try {
-      const miniatura = retratar(renderizador.current);
+      // la foto va sólo en su campo: metida además dentro del atuendo
+      // viajaría dos veces, y pesa bastante más que el resto junto
       await guardarPerfil({
-        avatar: JSON.stringify({ atuendo, miniatura }),
-        miniatura,
+        avatar: comoJson(atuendo),
+        miniatura: retratar(renderizador.current),
       });
       setAviso("¡Listo! Tu avatar quedó guardado.");
     } catch {
