@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BarraSesion } from "./BarraSesion";
 import { useSesion } from "./ProveedorSesion";
 
@@ -16,10 +17,16 @@ export function Marco({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className="border-b-4 border-dashed border-sky-200 bg-white/70">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold text-sky-700">
             📐 Materama
           </Link>
+
+          <nav className="flex gap-2">
+            <Modulo href="/" nombre="Geometría" />
+            <Modulo href="/ecuaciones" nombre="Ecuaciones" />
+          </nav>
+
           <BarraSesion />
         </div>
       </header>
@@ -32,5 +39,22 @@ export function Marco({ children }: { children: React.ReactNode }) {
         Hecho para aprender jugando ✨
       </footer>
     </>
+  );
+}
+
+function Modulo({ href, nombre }: { href: string; nombre: string }) {
+  const donde = usePathname();
+  const aqui = donde === href;
+
+  return (
+    <Link
+      href={href}
+      aria-current={aqui ? "page" : undefined}
+      className={`rounded-full px-4 py-2 font-bold transition ${
+        aqui ? "bg-sky-500 text-white shadow" : "text-sky-700 hover:bg-sky-100"
+      }`}
+    >
+      {nombre}
+    </Link>
   );
 }

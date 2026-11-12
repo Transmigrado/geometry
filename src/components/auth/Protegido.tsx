@@ -2,9 +2,9 @@
 
 import { Login } from "./Login";
 import { useSesion } from "./ProveedorSesion";
-import { ProblemaWizard } from "@/components/problema/ProblemaWizard";
 
-export function Aplicacion() {
+/** Lo que hay detrás solo se ve con la sesión iniciada. */
+export function Protegido({ children }: { children: React.ReactNode }) {
   const { usuario, cargando } = useSesion();
 
   if (cargando) {
@@ -15,5 +15,5 @@ export function Aplicacion() {
     );
   }
 
-  return usuario ? <ProblemaWizard /> : <Login />;
+  return usuario ? <>{children}</> : <Login />;
 }

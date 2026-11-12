@@ -1,8 +1,16 @@
 # Materama
 
-App web para que niños armen y visualicen los problemas de geometría del
-colegio: dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto
-volumen de B se necesita para cubrir o llenar A?
+App web para que niños vean las matemáticas del colegio, en vez de solo
+calcularlas. Tiene dos módulos:
+
+- **Geometría**: armar y visualizar problemas de superficie y volumen.
+- **Ecuaciones**: descubrir cuánto pesa cada fruta mirando una pesa, que es
+  una ecuación de primer grado contada con dibujos.
+
+## Geometría
+
+Dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto volumen
+de B se necesita para cubrir o llenar A?
 
 El wizard pregunta, en orden:
 
@@ -27,6 +35,19 @@ paso hasta la división final.
 
 Cuando B es un cubo aparecen además los dos conteos concretos: los cuadrados de
 cada cara de A y el llenado capa por capa con cubitos.
+
+## Ecuaciones
+
+Modo práctica: la pesa marca un número y encima hay varias frutas iguales,
+así que `cantidad × fruta = total`. El niño elige entre cuatro opciones
+cuánto pesa cada una.
+
+Al equivocarse la pesa muestra lo que marcaría con esa respuesta (si cada
+manzana pesara 9, marcaría 45 y no 40), que es la forma de ver el error sin
+que se lo expliquen. Al acertar aparece la división que lo resuelve.
+
+Las opciones equivocadas son los errores que de verdad se cometen: restar en
+vez de dividir, contar las frutas o pasarse por poco.
 
 ## Stack
 
