@@ -20,7 +20,9 @@ export type Ejercicio = {
   cantidad: number;
   /** lo que pesa cada fruta: la incógnita */
   peso: number;
-  /** lo que marca la pesa */
+  /** una pesa de peso conocido que acompaña a las frutas; 0 si no hay */
+  extra: number;
+  /** lo que marca la pesa: cantidad × peso + extra */
   total: number;
   opciones: number[];
 };
@@ -38,27 +40,48 @@ export const PRIMER_EJERCICIO: Ejercicio = {
   fruta: FRUTAS[0],
   cantidad: 5,
   peso: 8,
+  extra: 0,
   total: 40,
   opciones: [9, 35, 8, 7],
 };
 
-export function nuevoEjercicio(): Ejercicio {
+/** Las pesas de metal vienen en números redondos. */
+const PESAS = [5, 10, 15, 20];
+
+export function nuevoEjercicio(conPesa = Math.random() < 0.5): Ejercicio {
   const fruta = FRUTAS[azar(0, FRUTAS.length - 1)];
   const cantidad = azar(FRUTAS_MIN, FRUTAS_MAX);
   const peso = azar(PESO_MIN, PESO_MAX);
-  const total = cantidad * peso;
+  const extra = conPesa ? PESAS[azar(0, PESAS.length - 1)] : 0;
+  const total = cantidad * peso + extra;
 
-  return { fruta, cantidad, peso, total, opciones: opcionesPara(cantidad, peso, total) };
+  return {
+    fruta,
+    cantidad,
+    peso,
+    extra,
+    total,
+    opciones: opcionesPara(cantidad, peso, total, extra),
+  };
 }
 
 /**
  * Las opciones equivocadas son los errores que de verdad comete un niño:
- * restar en vez de dividir, contar las frutas o pasarse por poco.
+ * olvidar la pesa, olvidar repartir, o pasarse por poco.
  */
-function opcionesPara(cantidad: number, peso: number, total: number) {
+function opcionesPara(
+  cantidad: number,
+  peso: number,
+  total: number,
+  extra: number,
+) {
+  const descuidos =
+    extra > 0
+      ? [Math.round(total / cantidad), total - extra]
+      : [total - cantidad, cantidad];
+
   const candidatos = [
-    total - cantidad,
-    cantidad,
+    ...descuidos,
     peso + 1,
     peso - 1,
     peso + 2,

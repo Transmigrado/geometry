@@ -42,12 +42,17 @@ Modo práctica: la pesa marca un número y encima hay varias frutas iguales,
 así que `cantidad × fruta = total`. El niño elige entre cuatro opciones
 cuánto pesa cada una.
 
+A veces aparece además una pesa de metal de peso conocido, y entonces la
+ecuación lleva término independiente: `4 × 🍊 + 15 = 59`. Se resuelve en dos
+pasos, sacar la pesa y después repartir, y así se dice al acertar.
+
 Al equivocarse la pesa muestra lo que marcaría con esa respuesta (si cada
 manzana pesara 9, marcaría 45 y no 40), que es la forma de ver el error sin
 que se lo expliquen. Al acertar aparece la división que lo resuelve.
 
 Las opciones equivocadas son los errores que de verdad se cometen: restar en
-vez de dividir, contar las frutas o pasarse por poco.
+vez de dividir, contar las frutas, o —cuando hay pesa— olvidar restarla
+antes de repartir y olvidar repartir después de restarla.
 
 ## Stack
 

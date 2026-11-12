@@ -9,8 +9,11 @@ export function Practica() {
   const [elegida, setElegida] = useState<number | null>(null);
   const [resueltos, setResueltos] = useState(0);
 
-  const { fruta, cantidad, peso, total, opciones } = ejercicio;
+  const { fruta, cantidad, peso, extra, total, opciones } = ejercicio;
   const acertada = elegida === null ? null : elegida === peso;
+  const conPesa = extra > 0;
+  /** lo que marcaría la pesa con la respuesta elegida */
+  const marcaria = cantidad * (elegida ?? 0) + extra;
 
   function responder(opcion: number) {
     if (acertada) return;
@@ -38,12 +41,14 @@ export function Practica() {
         <Balanza
           fruta={fruta}
           cantidad={cantidad}
-          marca={acertada === false ? cantidad * elegida! : total}
+          extra={extra}
+          marca={acertada === false ? marcaria : total}
           correcta={acertada}
         />
 
         <p className="text-2xl font-extrabold text-slate-800">
-          {cantidad} × {fruta.emoji} = {total}
+          {cantidad} × {fruta.emoji}
+          {conPesa && ` + ${extra}`} = {total}
         </p>
       </section>
 
@@ -69,7 +74,9 @@ export function Practica() {
       {acertada === false && (
         <p className="rounded-3xl bg-amber-100 p-6 text-lg font-bold text-amber-900">
           Si cada {fruta.nombre} pesara {elegida}, la pesa marcaría {cantidad} ×{" "}
-          {elegida} = {cantidad * elegida!}, y marca {total}. Prueba con otra.
+          {elegida}
+          {conPesa && ` + ${extra}`} = {marcaria}, y marca {total}. Prueba con
+          otra.
         </p>
       )}
 
@@ -79,8 +86,13 @@ export function Practica() {
             🎉 ¡Eso es! Cada {fruta.nombre} pesa {peso}
           </p>
           <p className="mt-2 text-lg font-bold text-emerald-50">
-            Para encontrarlo repartimos lo que marca la pesa entre las{" "}
-            {fruta.plural}: {total} ÷ {cantidad} = {peso}.
+            {conPesa
+              ? `Primero sacamos la pesa de ${extra}: ${total} − ${extra} = ${
+                  total - extra
+                }. Eso pesan las ${fruta.plural} juntas, así que ${
+                  total - extra
+                } ÷ ${cantidad} = ${peso}.`
+              : `Para encontrarlo repartimos lo que marca la pesa entre las ${fruta.plural}: ${total} ÷ ${cantidad} = ${peso}.`}
           </p>
         </section>
       )}
