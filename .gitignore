@@ -42,9 +42,3 @@ next-env.d.ts
 
 # el ejemplo sí se versiona; .env.local con las claves no
 !.env.local.example
-
-# salen del pack comprado con herramientas/extraer-avatar.py
-public/avatar/modelos/
-public/avatar/iconos/
-# se copia de node_modules, ver AVATAR.md
-public/draco/
