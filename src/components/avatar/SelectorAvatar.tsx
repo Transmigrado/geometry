@@ -4,6 +4,7 @@ import { Suspense, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { WebGLRenderer } from "three";
 import { Escena } from "./Escena";
+import { Frontera } from "./Frontera";
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import type { Perfil } from "@/lib/perfil";
 import { COLORES_ROPA, PIELES, UNA_PIEZA, type Color } from "@/lib/paleta";
@@ -97,14 +98,16 @@ export function SelectorAvatar({
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section className="overflow-hidden rounded-3xl bg-white p-4 shadow-sm">
           <div className="h-[26rem] w-full overflow-hidden rounded-2xl lg:h-[34rem]">
-            <Suspense fallback={<Cargando />}>
-              <Escena
-                atuendo={atuendo}
-                alCrear={(gl) => {
-                  renderizador.current = gl;
-                }}
-              />
-            </Suspense>
+            <Frontera aviso="No pudimos cargar tu avatar. Prueba a recargar la página.">
+              <Suspense fallback={<Cargando />}>
+                <Escena
+                  atuendo={atuendo}
+                  alCrear={(gl) => {
+                    renderizador.current = gl;
+                  }}
+                />
+              </Suspense>
+            </Frontera>
           </div>
         </section>
 
@@ -141,13 +144,15 @@ export function SelectorAvatar({
             alElegir={(piel) => setAtuendo({ ...atuendo, piel })}
           />
 
-          <Suspense fallback={<Cargando />}>
-            <Piezas
-              slot={slot}
-              puesta={atuendo.piezas[slot] ?? null}
-              alElegir={ponerse}
-            />
-          </Suspense>
+          <Frontera aviso="No pudimos cargar el vestuario.">
+            <Suspense fallback={<Cargando />}>
+              <Piezas
+                slot={slot}
+                puesta={atuendo.piezas[slot] ?? null}
+                alElegir={ponerse}
+              />
+            </Suspense>
+          </Frontera>
         </section>
       </div>
 
