@@ -8,19 +8,23 @@ import { SelectorAvatar } from "@/components/avatar/SelectorAvatar";
 import {
   conSello,
   edadDe,
-  PASOS,
   pasoPendiente,
+  pasosDe,
   type Paso,
   type Perfil,
+  type Rol,
 } from "@/lib/perfil";
+import { CASA, PERFILES } from "@/lib/roles";
 
 const TITULO: Record<Paso, string> = {
+  perfil: "¿Quién eres?",
   nombre: "¿Cómo te llamas?",
   nacimiento: "¿Cuándo es tu cumpleaños?",
   avatar: "Y ahora, ¡tú!",
 };
 
 const PIE: Record<Paso, string> = {
+  perfil: "Según lo que elijas verás unas pantallas u otras.",
   nombre: "Para saludarte cada vez que entres.",
   nacimiento: "Lo usamos para proponerte problemas de tu edad.",
   avatar: "Elige tu pelo, tu ropa y tus zapatos. Después puedes cambiarlo.",
@@ -39,18 +43,22 @@ export function Onboarding() {
   const { perfil } = usePerfil();
   const guardarPaso = useGuardarPaso();
 
-  // de dónde arranca lo dice el perfil, pero desde ahí manda el niño: así
-  // puede volver atrás a corregirse sin tener que borrar lo que ya puso
-  const [paso, setPaso] = useState<Paso>(() => pasoPendiente(perfil) ?? "nombre");
+  // quien llega sin nombre empieza por el principio; quien ya había
+  // empezado, donde lo dejó. Desde ahí manda él: puede volver atrás a
+  // corregirse sin tener que borrar lo que ya puso
+  const [paso, setPaso] = useState<Paso>(() =>
+    perfil.nombre ? (pasoPendiente(perfil) ?? "perfil") : "perfil",
+  );
 
-  const cual = PASOS.indexOf(paso);
-  const anterior = PASOS[cual - 1];
+  const pasos = pasosDe(perfil.rol);
+  const cual = pasos.indexOf(paso);
+  const anterior = pasos[cual - 1];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          {PASOS.map((otro, indice) => (
+          {pasos.map((otro, indice) => (
             <span
               key={otro}
               className={`h-2 flex-1 rounded-full transition ${
@@ -60,7 +68,7 @@ export function Onboarding() {
           ))}
         </div>
         <p className={ETIQUETA}>
-          Paso {cual + 1} de {PASOS.length}
+          Paso {cual + 1} de {pasos.length}
         </p>
       </div>
 
@@ -71,8 +79,15 @@ export function Onboarding() {
         <p className="text-lg text-slate-600">{PIE[paso]}</p>
       </div>
 
+      {paso === "perfil" && (
+        <PreguntaPerfil alSeguir={() => setPaso("nombre")} />
+      )}
       {paso === "nombre" && (
-        <PreguntaNombre alSeguir={() => setPaso("nacimiento")} />
+        <PreguntaNombre
+          alSeguir={() =>
+            perfil.rol === "student" ? setPaso("nacimiento") : undefined
+          }
+        />
       )}
       {paso === "nacimiento" && (
         <PreguntaNacimiento alSeguir={() => setPaso("avatar")} />
@@ -97,6 +112,54 @@ export function Onboarding() {
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * Quién eres. El rol que se elija aquí no da poder sobre nadie: ser
+ * profesor de verdad pasa por canjear la invitación de un colegio, y
+ * administrar a un niño, por su código de familia.
+ */
+function PreguntaPerfil({ alSeguir }: { alSeguir: () => void }) {
+  const { perfil, guardar } = usePerfil();
+  const [guardando, setGuardando] = useState<Rol | null>(null);
+
+  async function elegir(rol: Rol) {
+    setGuardando(rol);
+    try {
+      if (rol !== perfil.rol) await guardar({ rol });
+      alSeguir();
+    } catch {
+      setGuardando(null);
+    }
+  }
+
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {PERFILES.map((cual) => (
+        <li key={cual.rol}>
+          <button
+            type="button"
+            onClick={() => elegir(cual.rol)}
+            disabled={guardando !== null}
+            aria-pressed={cual.rol === perfil.rol}
+            className={`flex w-full items-start gap-4 rounded-3xl border-2 bg-white p-5 text-left transition disabled:opacity-50 ${
+              cual.rol === perfil.rol
+                ? "border-sky-500 shadow"
+                : "border-transparent shadow-sm hover:border-sky-300"
+            }`}
+          >
+            <span className="text-3xl" aria-hidden>{cual.emoji}</span>
+            <span className="flex flex-col gap-1">
+              <span className="text-lg font-extrabold text-sky-800">
+                {cual.titulo}
+              </span>
+              <span className="text-sm text-slate-600">{cual.pie}</span>
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -181,9 +244,9 @@ function PreguntaNacimiento({ alSeguir }: { alSeguir: () => void }) {
 }
 
 /**
- * Guarda un paso y, si con eso ya no queda nada que preguntar, lleva al
- * home: terminar de presentarse es entrar a la app, no quedarse en la
- * página por la que el onboarding apareció.
+ * Guarda un paso y, si con eso ya no queda nada que preguntar, lleva a
+ * donde le toque: terminar de presentarse es entrar a la app, y la app de
+ * un profesor no es la misma que la de un niño.
  */
 function useGuardarPaso() {
   const { perfil, guardar } = usePerfil();
@@ -192,7 +255,7 @@ function useGuardarPaso() {
   return async (cambios: Partial<Perfil>) => {
     const sellados = conSello(perfil, cambios);
     await guardar(sellados);
-    if (sellados.listo) router.replace("/");
+    if (sellados.listo) router.replace(CASA[{ ...perfil, ...sellados }.rol]);
   };
 }
 

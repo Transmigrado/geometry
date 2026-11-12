@@ -33,6 +33,8 @@ type Props = {
 
 const COLOR_A = { fuerte: "#0ea5e9", claro: "#bae6fd", texto: "text-sky-700" };
 const COLOR_B = { fuerte: "#f59e0b", claro: "#fde68a", texto: "text-amber-700" };
+import { Adivina } from "./Adivina";
+import { temaDe } from "@/lib/metricas";
 
 export function Resultado({ problema, a, b }: Props) {
   const [armado, setArmado] = useState(1);
@@ -189,20 +191,12 @@ export function Resultado({ problema, a, b }: Props) {
           🙈 Ocultar los cálculos
         </button>
       ) : (
-        <section className="flex flex-col items-start gap-4 rounded-3xl border-4 border-dashed border-emerald-400 bg-white p-6">
-          <p className="text-lg font-bold text-slate-700">
-            ✏️ Ahora te toca a ti: resuélvelo mirando los dibujos y después
-            comprueba si acertaste.
-          </p>
-          <button
-            type="button"
-            onClick={() => setCalculos(true)}
-            aria-pressed
-            className="rounded-full bg-emerald-500 px-6 py-3 font-bold text-white shadow"
-          >
-            👀 Mostrar los cálculos
-          </button>
-        </section>
+        <Adivina
+          esperada={necesarios}
+          tema={temaDe(problema)}
+          unidad={problema === "superficie" ? "piezas" : "cuerpos"}
+          alResolver={() => setCalculos(true)}
+        />
       )}
 
       {calculos && (

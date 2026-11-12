@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { autenticacion, hayConfiguracion } from "@/lib/firebase";
+import { olvidarCurso } from "@/lib/metricas";
 
 type Sesion = {
   usuario: User | null;
@@ -44,6 +45,8 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
         ...estado,
         configurado,
         salir: async () => {
+          // el curso del que se va no vale para el que entre después
+          olvidarCurso();
           if (configurado) await signOut(autenticacion());
         },
       }}

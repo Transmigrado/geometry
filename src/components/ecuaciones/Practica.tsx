@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Balanza } from "./Balanza";
 import { nuevoEjercicio, PRIMER_EJERCICIO } from "@/lib/ecuaciones";
+import { cronometro, errorDe, registrar, TEMAS } from "@/lib/metricas";
 
 export function Practica() {
   const [ejercicio, setEjercicio] = useState(PRIMER_EJERCICIO);
@@ -15,15 +16,28 @@ export function Practica() {
   /** lo que marcaría la pesa con la respuesta elegida */
   const marcaria = cantidad * (elegida ?? 0) + extra;
 
+  // desde cuándo lleva mirando este ejercicio
+  const [reloj] = useState(cronometro);
+
   function responder(opcion: number) {
     if (acertada) return;
     setElegida(opcion);
     if (opcion === peso) setResueltos(resueltos + 1);
+
+    registrar({
+      modulo: "equations",
+      tema: conPesa ? TEMAS.ecuacionConPesa : TEMAS.ecuacionSimple,
+      tipo: "answer",
+      acierto: opcion === peso,
+      error: errorDe(opcion, { cantidad, peso, total, extra }),
+      duracion: reloj.ms(),
+    });
   }
 
   function siguiente() {
     setEjercicio(nuevoEjercicio());
     setElegida(null);
+    reloj.reiniciar();
   }
 
   return (

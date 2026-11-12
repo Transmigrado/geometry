@@ -32,8 +32,15 @@ cambiarlo. Ahí vive también el botón de cerrar sesión: en la cabecera se
 tropezaba con él sin querer, y cerrar la sesión a medio problema no se lo
 deseamos a nadie. La cabecera sólo lleva al perfil.
 
+**El avatar depende del rol.** El alumno arma su muñeco en 3D y lo que se
+guarda es su atuendo más un retrato de 128×128 sacado del propio lienzo.
+Los demás suben una foto, que el navegador recorta en cuadrado de 256 y
+sube a Storage (`fotos/{uid}`); en el perfil queda su dirección. Así en
+Storage sólo acaban caras de adultos: de los niños no se guarda ninguna
+fotografía, y conviene que siga siendo así.
+
 En Firestore los campos van en inglés, por convención: `name`, `lastName`,
-`birthdate`, `avatar`, `thumbnail`, `onboarded` y `updatedAt`. Dentro de la
+`birthdate`, `avatar`, `thumbnail`, `photoUrl`, `onboarded` y `updatedAt`. Dentro de la
 app el perfil habla español como todo lo demás, y la traducción vive sólo en
 `src/lib/perfil.ts`.
 

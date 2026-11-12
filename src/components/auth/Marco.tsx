@@ -6,6 +6,7 @@ import { BarraSesion } from "./BarraSesion";
 import { usePerfil } from "./ProveedorPerfil";
 import { useSesion } from "./ProveedorSesion";
 import { pasoPendiente } from "@/lib/perfil";
+import { MENU } from "@/lib/roles";
 
 /**
  * La cabecera y el pie solo acompañan a quien ya entró y ya se presentó: el
@@ -29,8 +30,9 @@ export function Marco({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="flex gap-2">
-            <Modulo href="/" nombre="Geometría" />
-            <Modulo href="/ecuaciones" nombre="Ecuaciones" />
+            {MENU[perfil.perfil.rol].map((modulo) => (
+              <Modulo key={modulo.href} {...modulo} />
+            ))}
           </nav>
 
           <BarraSesion />

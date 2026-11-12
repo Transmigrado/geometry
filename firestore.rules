@@ -1,0 +1,334 @@
+rules_version = '2';
+
+/**
+ * Quién puede leer y escribir qué. Son datos de menores —nombre, apellido,
+ * fecha de nacimiento y lo que les cuesta cada materia—, así que todo
+ * cuelga de dos principios:
+ *
+ * 1. EL ROL NO AUTORIZA. Autorizan los documentos de relación: la
+ *    membresía, la matrícula, la tutoría. El rol viaja en el token y el
+ *    token se renueva cada hora, así que a un profesor al que echan hoy le
+ *    quedaría una hora de acceso a datos de niños. Borrar su membresía, en
+ *    cambio, le cierra la puerta en el mismo instante. El rol sólo sirve
+ *    para decidir qué pantalla pintar, y aquí no se lee nunca.
+ *
+ * 2. QUIEN ACABA DE REGISTRARSE NO TIENE NADA. Sin claims y sin
+ *    relaciones, lo único que puede hacer es crear su propio documento y
+ *    llamar a un callable. Nada más.
+ *
+ * Firestore permite diez accesos a documento por petición, y los que
+ * repiten ruta se cobran una vez. De ahí vive el permiso de listar: la
+ * consulta tiene que venir acotada a un curso o a un colegio, y entonces
+ * el get() se hace una sola vez para los treinta documentos. Quien liste
+ * sin filtrar se pasa del presupuesto y falla, que es lo que queremos.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────────────────────── ayudas ─────────────────────────
+
+    function entro() { return request.auth != null; }
+    function yo() { return request.auth.uid; }
+    function mio(uid) { return entro() && yo() == uid; }
+
+    // Las rutas se escriben enteras: el lenguaje de reglas no deja componer
+    // una ruta a partir de una función que devuelva el prefijo.
+    //
+    // get() sobre algo que no existe devuelve null, y pedirle .data a null
+    // revienta la evaluación entera. Por eso todas comprueban antes.
+
+    function miembro(schoolId) {
+      return get(/databases/$(database)/documents/schools/$(schoolId)/members/$(yo()));
+    }
+
+    function esStaffDe(schoolId) {
+      let m = miembro(schoolId);
+      return entro() && m != null && m.data.status == 'active';
+    }
+
+    function esAdminDe(schoolId) {
+      let m = miembro(schoolId);
+      return entro() && m != null && m.data.status == 'active'
+             && m.data.role == 'admin';
+    }
+
+    /**
+     * Dueño del curso y, si el curso pertenece a un colegio, staff vigente
+     * de ese colegio. Lo segundo no sobra: sin ello, quitarle la membresía
+     * a un profesor le dejaría su curso y sus alumnos para siempre.
+     */
+    function esProfesorDe(courseId) {
+      let c = get(/databases/$(database)/documents/courses/$(courseId));
+      return entro() && c != null && c.data.teacherId == yo()
+             && (c.data.schoolId == null || esStaffDe(c.data.schoolId));
+    }
+
+    function matricula(courseId) {
+      return get(/databases/$(database)/documents/enrollments/$(yo() + '_' + courseId));
+    }
+
+    function matriculado(courseId) {
+      let m = matricula(courseId);
+      return entro() && m != null && m.data.status == 'active';
+    }
+
+    /**
+     * La tutoría la crea sólo el servidor. Si el cliente pudiera crearla,
+     * cualquiera que conociera un uid se adjudicaría a un menor y vería su
+     * perfil entero.
+     */
+    function esApoderadoDe(studentId) {
+      let g = get(/databases/$(database)/documents/guardianships/$(yo() + '_' + studentId));
+      return entro() && g != null && g.data.status == 'active';
+    }
+
+    function esElAlumnoOSuApoderado(studentId) {
+      return mio(studentId) || esApoderadoDe(studentId);
+    }
+
+    // ───────────────────────── users ─────────────────────────
+    //
+    // El perfil privado, con la fecha de nacimiento de un menor. No lo lee
+    // ningún profesor ni ningún colegio: para los listados están el roster
+    // del curso y la membresía del colegio, con lo mínimo imprescindible.
+
+    function camposPropios() {
+      return ['name', 'lastName', 'birthdate', 'avatar', 'thumbnail',
+              'photoUrl', 'onboarded', 'updatedAt'];
+    }
+
+    function rolValido(r) {
+      return r in ['student', 'teacher', 'school', 'parent'];
+    }
+
+    match /users/{uid} {
+      allow get: if mio(uid) || esApoderadoDe(uid);
+
+      // Nunca. «Buscar usuario por correo» es justo lo que nadie debe poder
+      // hacer sobre un niño.
+      allow list: if false;
+
+      /**
+       * El que acaba de registrarse se crea su documento. Puede elegir
+       * rol, pero sólo entre los que no dan poder sobre nadie: profesor y
+       * colegio los escribe el servidor al canjear una invitación. Y como
+       * aquí el rol no autoriza, mentir no sirve de nada —un falso alumno
+       * sin matrícula no puede leer nada de nadie.
+       */
+      allow create: if mio(uid)
+        && rolValido(request.resource.data.role)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly(
+             camposPropios().concat(['role', 'createdAt']));
+
+      /**
+       * El rol sí se puede cambiar, y a cualquiera de los cuatro. Suena
+       * peligroso y no lo es: el rol no autoriza nada —de eso se encargan
+       * la membresía, la matrícula y la tutoría—, así que ponerse
+       * «school» sólo enseña un panel que no puede hacer nada hasta que
+       * exista un colegio de verdad detrás.
+       *
+       * Lo que sigue fuera del alcance del cliente es `schoolId` y
+       * cualquier otro campo que el servidor escriba: ahí sí se decide
+       * quién ve qué.
+       */
+      allow update: if mio(uid)
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(camposPropios().concat(['role']))
+        && rolValido(request.resource.data.role);
+
+      // borrar arrastra métricas de un curso entero: va por callable
+      allow delete: if false;
+    }
+
+    // ───────────────────────── schools ─────────────────────────
+
+    match /schools/{schoolId} {
+      allow get: if esStaffDe(schoolId);
+      allow list: if false;              // no hay directorio público
+      allow write: if false;
+    }
+
+    // Lo que lee el panel del colegio para administrar profesores. Lleva
+    // correo porque son adultos y hace falta para reinvitar.
+    match /schools/{schoolId}/members/{uid} {
+      allow get: if mio(uid) || esAdminDe(schoolId);
+      allow list: if esAdminDe(schoolId);
+      allow write: if false;
+    }
+
+    match /schools/{schoolId}/insights/{periodo} {
+      allow get, list: if esAdminDe(schoolId);
+      allow write: if false;
+    }
+
+    // ───────────────────────── courses ─────────────────────────
+
+    match /courses/{courseId} {
+      allow get: if esProfesorDe(courseId)
+                 || matriculado(courseId)
+                 || (resource.data.schoolId != null
+                     && esStaffDe(resource.data.schoolId));
+
+      // Dos consultas admitidas y sólo ésas: «mis cursos» por teacherId y
+      // el panel del colegio por schoolId.
+      allow list: if (entro() && resource.data.teacherId == yo())
+                  || (resource.data.schoolId != null
+                      && esAdminDe(resource.data.schoolId));
+
+      allow create: if false;            // necesita código: callable
+      allow delete: if false;            // se archiva, nunca se borra
+
+      allow update: if esProfesorDe(courseId)
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['name', 'archived', 'updatedAt']);
+    }
+
+    /**
+     * El código de matrícula vive aparte a propósito. Firestore no tiene
+     * permisos por campo, así que si estuviera en el documento del curso lo
+     * leería cualquier alumno matriculado —y podría repartir su clase.
+     */
+    match /courses/{courseId}/secrets/{cual} {
+      allow get, list: if esProfesorDe(courseId);
+      allow write: if false;
+    }
+
+    /**
+     * El listado de alumnos del curso: nombre y apellido, nada más. Sin
+     * fecha de nacimiento, sin correo y sin miniatura, que son 19 KB por
+     * niño.
+     */
+    match /courses/{courseId}/roster/{studentId} {
+      allow get: if esElAlumnoOSuApoderado(studentId) || esProfesorDe(courseId);
+
+      // Un alumno no lista a sus compañeros: el código de curso lo puede
+      // tener cualquiera, y la lista de nombres de un aula de menores no se
+      // entrega a cambio de seis letras.
+      allow list: if esProfesorDe(courseId);
+      allow write: if false;
+    }
+
+    match /courses/{courseId}/insights/{periodo} {
+      allow get, list: if esProfesorDe(courseId);
+      allow write: if false;
+    }
+
+    // ──────────────── matrículas y tutorías ────────────────
+    // Las dos son documentos de autorización: quien pueda escribirlas se
+    // está concediendo permisos a sí mismo. Sólo el servidor.
+
+    match /enrollments/{id} {
+      allow get: if esElAlumnoOSuApoderado(resource.data.studentId)
+                 || esProfesorDe(resource.data.courseId);
+      allow list: if esElAlumnoOSuApoderado(resource.data.studentId)
+                  || esProfesorDe(resource.data.courseId);
+      allow write: if false;
+    }
+
+    match /guardianships/{id} {
+      allow get, list: if entro() && (resource.data.parentId == yo()
+                                      || resource.data.studentId == yo());
+      allow write: if false;
+    }
+
+    // ───────────────────────── invites ─────────────────────────
+    /**
+     * Cerrada entera. Con el código como nombre del documento, dejar leer
+     * convertiría la base en un oráculo: una lectura por intento hasta dar
+     * con un aula viva. Y el canje necesita transacción y límite de
+     * intentos, que en reglas no existen. Se entra sólo por el callable.
+     */
+    match /invites/{code} {
+      allow read, write: if false;
+    }
+
+    // ───────────────────────── attempts ─────────────────────────
+    /**
+     * El registro crudo, inmutable. Lo escribe el propio alumno: no hay
+     * servidor en medio de cada respuesta, así que estas reglas validan la
+     * forma y de quién es, no que el acierto sea verdad. Verdad no lo puede
+     * saber nadie mientras el ejercicio se genere en el navegador, que es
+     * como funciona hoy.
+     */
+    function temaValido(t) {
+      return t is string && t.size() > 0 && t.size() <= 40
+             && t.matches('^[a-z][a-z0-9.]*$');
+    }
+
+    function intentoValido(d, m) {
+      return d.keys().hasOnly(['studentId', 'courseId', 'schoolId', 'module',
+                               'topic', 'kind', 'correct', 'errorKind',
+                               'durationMs', 'createdAt'])
+        && d.keys().hasAll(['studentId', 'courseId', 'module', 'topic',
+                            'kind', 'correct', 'createdAt'])
+        && d.module in ['geometry', 'equations']
+        && temaValido(d.topic)
+        && d.kind in ['answer', 'explore']
+        // Un paseo por el wizard no es un acierto. Si «explore» pudiera
+        // traer correct, todo promedio del panel sería mentira.
+        && (d.kind == 'answer' ? d.correct is bool : d.correct == null)
+        && d.createdAt == request.time
+        // El colegio no lo elige el cliente: lo dicta su matrícula.
+        && (d.courseId == null
+            ? d.schoolId == null
+            : (m != null && m.data.status == 'active'
+               && d.schoolId == m.data.schoolId));
+    }
+
+    match /attempts/{id} {
+      allow create: if mio(request.resource.data.studentId)
+        && intentoValido(
+             request.resource.data,
+             request.resource.data.courseId == null
+               ? null
+               : matricula(request.resource.data.courseId));
+
+      allow get: if esElAlumnoOSuApoderado(resource.data.studentId)
+                 || (resource.data.courseId != null
+                     && esProfesorDe(resource.data.courseId));
+
+      allow list: if esElAlumnoOSuApoderado(resource.data.studentId)
+                  || (resource.data.courseId != null
+                      && esProfesorDe(resource.data.courseId));
+
+      // Si el alumno pudiera corregir el pasado borraría sus fallos, y los
+      // agregados quedarían descuadrados para siempre.
+      allow update, delete: if false;
+    }
+
+    // ───────────────────────── progress ─────────────────────────
+    /**
+     * Un documento por alumno y curso, con los temas en un mapa dentro. No
+     * es capricho: con un documento por alumno y tema, «los temas flojos de
+     * mi curso» serían treinta alumnos por ocho temas, y ni la consulta ni
+     * el presupuesto de diez accesos de las reglas lo aguantan. Así es una
+     * consulta de treinta documentos y la suma se hace en el navegador.
+     */
+    match /progress/{id} {
+      allow get, list: if esElAlumnoOSuApoderado(resource.data.studentId)
+                       || (resource.data.courseId != null
+                           && esProfesorDe(resource.data.courseId));
+      allow write: if false;
+    }
+
+    // ──────────────── internas del servidor ────────────────
+    // Marcas de idempotencia del trigger, intentos de canje y bitácora. El
+    // Admin SDK se salta las reglas; el cliente no pinta nada aquí.
+
+    match /counted/{id} { allow read, write: if false; }
+    match /ratelimits/{uid} { allow read, write: if false; }
+    match /audit/{id} { allow read, write: if false; }
+
+    // La colección vieja, mientras dure la migración.
+    match /perfiles/{uid} {
+      allow read, write: if mio(uid);
+    }
+
+    // Firestore ya deniega por omisión; esto está para que quien lea el
+    // archivo sepa que lo que no aparece, no se puede.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -7,8 +7,8 @@ import {
   leido,
 } from "./perfil";
 import {
+  asegurarPerfil,
   guardarPerfil,
-  leerPerfil,
   PERFIL_VACIO,
   type Perfil,
 } from "@/lib/perfil";
@@ -20,7 +20,7 @@ import {
  */
 function* leer({ payload: uid }: ReturnType<typeof leerPedido>) {
   try {
-    const suyo: Perfil = yield call(leerPerfil, uid);
+    const suyo: Perfil = yield call(asegurarPerfil, uid);
     yield put(leido({ uid, perfil: suyo }));
   } catch {
     // quien no tiene perfil guardado arranca de cero, que para el caso es

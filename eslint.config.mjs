@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // el build de Unity viene minificado y no es nuestro para arreglarlo
     "public/**",
+    // el compilado de las Cloud Functions, que tiene sus propias reglas
+    "functions/lib/**",
   ]),
 ]);
 

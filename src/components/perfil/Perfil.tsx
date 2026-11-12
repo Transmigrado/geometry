@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import { useSesion } from "@/components/auth/ProveedorSesion";
 import { Avatar } from "@/components/avatar/Avatar";
+import { Alumno } from "./Alumno";
+import { Cambiar } from "./Cambiar";
+import { Foto } from "./Foto";
 import { edadDe, fechaLarga } from "@/lib/perfil";
 
 /** Lo que sabemos de quien entró, y la puerta para cambiar su avatar. */
@@ -25,12 +28,14 @@ export function Perfil() {
           <p className="text-2xl font-extrabold text-slate-800">
             {[perfil.nombre, perfil.apellido].filter(Boolean).join(" ")}
           </p>
-          <Link
-            href="/avatar"
-            className="rounded-full bg-sky-500 px-6 py-3 font-bold text-white shadow transition hover:bg-sky-600"
-          >
-            Cambiar avatar
-          </Link>
+          {perfil.rol === "student" && (
+            <Link
+              href="/avatar"
+              className="rounded-full bg-sky-500 px-6 py-3 font-bold text-white shadow transition hover:bg-sky-600"
+            >
+              Cambiar avatar
+            </Link>
+          )}
         </div>
       </section>
 
@@ -47,6 +52,10 @@ export function Perfil() {
         />
         <Dato nombre="Correo" valor={usuario?.email ?? null} />
       </section>
+
+      {perfil.rol === "student" ? <Alumno /> : <Foto />}
+
+      <Cambiar />
 
       <button
         type="button"

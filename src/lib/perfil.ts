@@ -10,15 +10,33 @@ export type Perfil = {
   nacimiento: string | null;
   /** el atuendo del avatar, tal como lo guarda el selector */
   avatar: string | null;
-  /** una foto chica del avatar, para mostrarla sin abrir el 3D */
+  /** una foto chica del avatar 3D, para mostrarla sin montar la escena */
   miniatura: string | null;
+  /**
+   * La foto de perfil de quien no es alumno. Los niños no suben ninguna:
+   * su cara es el muñeco, y así no guardamos retratos de menores.
+   */
+  foto: string | null;
   /**
    * Ya pasó por el onboarding. Se mira antes que los campos: una vez que
    * alguien se presentó no se le vuelve a preguntar, aunque después borre
    * un dato o aunque mañana el onboarding pregunte algo más.
    */
   listo: boolean;
+  /**
+   * Qué pantalla le toca. Ojo: esto NO autoriza nada —de eso se encargan
+   * los documentos de relación y las reglas—, sólo decide qué se pinta.
+   * El cliente puede escribir «student» y «parent»; «teacher» y «school»
+   * los pone el servidor al canjear una invitación.
+   */
+  rol: Rol;
+  /** el colegio al que pertenece, si lo hay. Lo escribe sólo el servidor. */
+  colegio: string | null;
 };
+
+export const ROLES = ["student", "teacher", "school", "parent"] as const;
+
+export type Rol = (typeof ROLES)[number];
 
 /**
  * En la base los campos van en inglés, por convención. Dentro de la app el
@@ -31,48 +49,56 @@ const CAMPO: Record<keyof Perfil, string> = {
   nacimiento: "birthdate",
   avatar: "avatar",
   miniatura: "thumbnail",
+  foto: "photoUrl",
   listo: "onboarded",
-};
-
-/**
- * Cómo se llamaban esos campos antes de la convención. Sólo se leen, para
- * no perder los perfiles de entonces; nunca se escriben. Cuando no queden
- * perfiles viejos, esto se borra.
- */
-const ANTES: Partial<Record<keyof Perfil, string>> = {
-  nombre: "nombre",
-  nacimiento: "nacimiento",
-  miniatura: "miniatura",
+  rol: "role",
+  colegio: "schoolId",
 };
 
 export const PERFIL_VACIO: Perfil = {
+  rol: "student",
+  colegio: null,
   nombre: null,
   apellido: null,
   nacimiento: null,
   avatar: null,
   miniatura: null,
+  foto: null,
   listo: false,
 };
 
-/** Lo que se pregunta al entrar por primera vez, en orden. */
-export const PASOS = ["nombre", "nacimiento", "avatar"] as const;
-
-export type Paso = (typeof PASOS)[number];
+export type Paso = "perfil" | "nombre" | "nacimiento" | "avatar";
 
 /**
  * Qué campos llena cada paso. Saber esto es lo que deja deducir en cuál se
  * quedó cada uno, sin llevar la cuenta por separado.
+ *
+ * «perfil» —elegir quién eres— no llena ninguno, porque el rol siempre
+ * tiene valor. Se pregunta igual, y lo pone el propio onboarding.
  */
 const LLENA: Record<Paso, readonly (keyof Perfil)[]> = {
+  perfil: [],
   nombre: ["nombre", "apellido"],
   nacimiento: ["nacimiento"],
   avatar: ["avatar"],
 };
 
+/**
+ * Lo que se le pregunta a cada quien. A un profesor no se le pide la fecha
+ * de nacimiento ni se le hace armar un avatar: eso es de los niños.
+ */
+export function pasosDe(rol: Rol): readonly Paso[] {
+  return rol === "student"
+    ? ["perfil", "nombre", "nacimiento", "avatar"]
+    : ["perfil", "nombre"];
+}
+
 /** El primer paso sin contestar, o nada si ya no hay nada que preguntar. */
 export function pasoPendiente(perfil: Perfil): Paso | null {
   if (perfil.listo) return null;
-  return PASOS.find((paso) => LLENA[paso].some((campo) => !perfil[campo])) ?? null;
+  return pasosDe(perfil.rol).find(
+    (paso) => LLENA[paso].some((campo) => !perfil[campo]),
+  ) ?? null;
 }
 
 /**
@@ -91,7 +117,38 @@ export function conSello(
 
 /** Cada usuario tiene su documento, con su propio uid de nombre. */
 function donde(uid: string) {
-  return doc(baseDeDatos(), "perfiles", uid);
+  return doc(baseDeDatos(), "users", uid);
+}
+
+/**
+ * Deja el documento creado si todavía no existe. Hace falta porque las
+ * reglas tratan distinto el alta —que fija el rol y la fecha de creación—
+ * de las modificaciones posteriores, que sólo tocan campos de perfil.
+ *
+ * De paso arrastra lo que hubiera en la colección vieja. Eso es temporal:
+ * en cuanto el único perfil de entonces esté copiado, se borra junto con
+ * la regla de `perfiles` en firestore.rules.
+ */
+export async function asegurarPerfil(uid: string): Promise<Perfil> {
+  const suyo = await getDoc(donde(uid));
+  if (suyo.exists()) return leerPerfil(uid);
+
+  const viejo = await getDoc(doc(baseDeDatos(), "perfiles", uid));
+  const datos = viejo.exists() ? viejo.data() : {};
+
+  const nuevo: Record<string, unknown> = {
+    role: "student",
+    createdAt: serverTimestamp(),
+  };
+
+  for (const campo of ["name", "lastName", "birthdate", "avatar",
+                       "thumbnail", "onboarded"]) {
+    if (datos[campo] !== undefined) nuevo[campo] = datos[campo];
+  }
+
+  await setDoc(donde(uid), nuevo);
+
+  return leerPerfil(uid);
 }
 
 export async function leerPerfil(uid: string): Promise<Perfil> {
@@ -100,10 +157,11 @@ export async function leerPerfil(uid: string): Promise<Perfil> {
 
   const datos = guardado.data();
   const texto = (campo: keyof Perfil) => {
-    const antes = ANTES[campo];
-    const valor = datos[CAMPO[campo]] ?? (antes ? datos[antes] : undefined);
+    const valor = datos[CAMPO[campo]];
     return typeof valor === "string" && valor ? valor : null;
   };
+
+  const rol = datos[CAMPO.rol];
 
   return {
     nombre: texto("nombre"),
@@ -111,7 +169,10 @@ export async function leerPerfil(uid: string): Promise<Perfil> {
     nacimiento: texto("nacimiento"),
     avatar: texto("avatar"),
     miniatura: texto("miniatura"),
+    foto: texto("foto"),
     listo: datos[CAMPO.listo] === true,
+    rol: ROLES.includes(rol) ? rol : "student",
+    colegio: texto("colegio"),
   };
 }
 

@@ -42,3 +42,7 @@ next-env.d.ts
 
 # el ejemplo sí se versiona; .env.local con las claves no
 !.env.local.example
+# firebase
+firestore-debug.log
+firebase-debug.log
+.firebase/

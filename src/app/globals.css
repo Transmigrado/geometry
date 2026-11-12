@@ -1,4 +1,16 @@
 @import "tailwindcss";
+/* los componentes de Flowbite, que visten los paneles de adultos */
+@plugin "flowbite-react/plugin/tailwindcss";
+@source "../../node_modules/flowbite-react/dist";
+
+/*
+ * Materama es clara y punto: fondo de cielo, blancos y colores vivos. Sin
+ * esto, los componentes de Flowbite se pasan al modo oscuro en cuanto el
+ * sistema operativo lo está, y aparecen tablas y barras casi negras en
+ * medio de una pantalla celeste. Atando «dark:» a una clase que nunca
+ * ponemos, esa variante no se activa nunca.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f0f9ff;

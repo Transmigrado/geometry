@@ -1,6 +1,8 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFunctions, type Functions } from "firebase/functions";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const configuracion = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -38,4 +40,12 @@ export function autenticacion(): Auth {
 
 export function baseDeDatos(): Firestore {
   return getFirestore(aplicacion());
+}
+
+export function funciones(): Functions {
+  return getFunctions(aplicacion());
+}
+
+export function almacenamiento(): FirebaseStorage {
+  return getStorage(aplicacion());
 }

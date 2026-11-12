@@ -26,11 +26,15 @@ const UNIDADES: { clave: Unidad; nombre: string; cubica: string }[] = [
 const COLOR = { fuerte: "#0ea5e9", claro: "#bae6fd" };
 const COLOR_CUBITO = "#f59e0b";
 const COLOR_LITRO = "#38bdf8";
+import { Adivina } from "./Adivina";
+import { TEMAS } from "@/lib/metricas";
 
 export function MedidaDeVolumen({ cuerpo }: { cuerpo: Cuerpo }) {
   const [unidad, setUnidad] = useState<Unidad>("cm");
   const [dimensiones, setDimensiones] = useState(false);
   const [cuenta, setCuenta] = useState(false);
+  // el número no se enseña hasta que el niño dice el suyo
+  const [resuelto, setResuelto] = useState(false);
 
   const medida = UNIDADES.find((item) => item.clave === unidad)!;
   const total = volumen(cuerpo);
@@ -124,6 +128,16 @@ export function MedidaDeVolumen({ cuerpo }: { cuerpo: Cuerpo }) {
         </Tarjeta>
       </div>
 
+      {!resuelto && (
+        <Adivina
+          esperada={cubitos}
+          tema={TEMAS.medirVolumen}
+          unidad={`cubitos de 1 ${unidad} de lado`}
+          alResolver={() => setResuelto(true)}
+        />
+      )}
+
+      {resuelto && (
       <section className="rounded-3xl bg-emerald-500 p-6 text-white shadow-lg">
         <p className="text-2xl font-extrabold">
           El volumen de este cuerpo es {formatear(total)} {medida.cubica}
@@ -134,10 +148,11 @@ export function MedidaDeVolumen({ cuerpo }: { cuerpo: Cuerpo }) {
             : `Es decir, unos ${cubitos} cubos de 1 ${unidad} de lado: en un cuerpo redondo los cubitos no calzan justos.`}
         </p>
       </section>
+      )}
 
-      <Litros total={total} unidad={unidad} />
+      {resuelto && <Litros total={total} unidad={unidad} />}
 
-      {cuenta ? (
+      {resuelto && (cuenta ? (
         <>
           <button
             type="button"
@@ -163,7 +178,7 @@ export function MedidaDeVolumen({ cuerpo }: { cuerpo: Cuerpo }) {
         >
           👀 Ver de dónde sale ese número
         </button>
-      )}
+      ))}
     </div>
   );
 }
