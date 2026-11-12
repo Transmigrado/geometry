@@ -1,5 +1,5 @@
-import { ProblemaWizard } from "@/components/problema/ProblemaWizard";
+import { Aplicacion } from "@/components/auth/Aplicacion";
 
 export default function Home() {
-  return <ProblemaWizard />;
+  return <Aplicacion />;
 }

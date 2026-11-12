@@ -1,4 +1,4 @@
-# Figurama
+# Materama
 
 App web para que niños armen y visualicen los problemas de geometría del
 colegio: dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto
@@ -38,10 +38,28 @@ cada cara de A y el llenado capa por capa con cubitos.
 
 ```bash
 npm install
+cp .env.local.example .env.local   # y pega los datos de Firebase
 npm run dev     # http://localhost:3000
 npm run build   # build de producción
 npm run lint
 ```
+
+## Cuentas
+
+Para entrar hay que iniciar sesión. La sesión la maneja Firebase
+Authentication y la configuración se lee de `.env.local`, que no se versiona.
+Sin esas variables la app no se cae: el login avisa que falta conectarlo.
+
+En la consola de Firebase, en **Authentication › Sign-in method**, hay que
+habilitar los modos que se ofrecen en pantalla:
+
+- **Correo y contraseña**: funciona apenas se habilita.
+- **Google**: funciona apenas se habilita.
+- **Apple**: además necesita una cuenta de Apple Developer de pago; mientras
+  no esté habilitado, el botón avisa que ese modo no está disponible.
+
+Los dominios desde donde se entra se autorizan en **Authentication ›
+Settings › Authorized domains**. `localhost` ya viene autorizado.
 
 ## Estructura
 
