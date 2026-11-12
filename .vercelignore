@@ -1,0 +1,11 @@
+# Las Cloud Functions no se despliegan en Vercel: van a Firebase con
+# `firebase deploy --only functions`. Mandarlas aquí sólo alarga la subida.
+functions
+
+# Las pruebas de reglas corren contra el emulador de Firebase.
+pruebas
+firestore.rules
+storage.rules
+firestore.indexes.json
+firebase.json
+.firebaserc

@@ -30,5 +30,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // Las Cloud Functions son otro proyecto: tienen su propio package.json,
+    // su propio tsconfig y se compilan con `npm run build` dentro de
+    // functions/. Revisarlas desde aquí rompe el despliegue del sitio,
+    // porque donde se compila la web no están instaladas sus dependencias.
+    "functions",
+    // y las pruebas de reglas, que corren con el emulador y no con Next
+    "pruebas"
+  ]
 }
