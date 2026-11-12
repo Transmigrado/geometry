@@ -258,11 +258,17 @@ service cloud.firestore {
 
     function intentoValido(d, m) {
       return d.keys().hasOnly(['studentId', 'courseId', 'schoolId', 'module',
-                               'topic', 'kind', 'correct', 'errorKind',
-                               'durationMs', 'createdAt'])
+                               'topic', 'challenge', 'localDate', 'kind',
+                               'correct', 'errorKind', 'durationMs',
+                               'createdAt'])
         && d.keys().hasAll(['studentId', 'courseId', 'module', 'topic',
-                            'kind', 'correct', 'createdAt'])
-        && d.module in ['geometry', 'equations']
+                            'challenge', 'localDate', 'kind', 'correct',
+                            'createdAt'])
+        && temaValido(d.challenge)
+        // el día que dice el niño; el trigger lo contrasta con su reloj
+        && d.localDate is string
+        && d.localDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.module in ['geometry', 'equations', 'fractions']
         && temaValido(d.topic)
         && d.kind in ['answer', 'explore']
         // Un paseo por el wizard no es un acierto. Si «explore» pudiera
@@ -295,6 +301,18 @@ service cloud.firestore {
       // Si el alumno pudiera corregir el pasado borraría sus fallos, y los
       // agregados quedarían descuadrados para siempre.
       allow update, delete: if false;
+    }
+
+    /**
+     * Lo que hizo cada niño cada día. Existe aparte del acumulado porque
+     * «cuántos ejercicios lleva» y «cómo le fue el martes» son preguntas
+     * distintas, y un contador de por vida no sabe responder la segunda.
+     */
+    match /daily/{id} {
+      allow get, list: if esElAlumnoOSuApoderado(resource.data.studentId)
+                       || (resource.data.courseId != null
+                           && esProfesorDe(resource.data.courseId));
+      allow write: if false;
     }
 
     // ───────────────────────── progress ─────────────────────────

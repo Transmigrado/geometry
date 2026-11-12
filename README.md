@@ -7,6 +7,8 @@ calcularlas. El niño entra a un tablero y elige materia:
   volumen.
 - **Ecuaciones** (`/ecuaciones`): descubrir cuánto pesa cada fruta mirando
   una pesa, que es una ecuación de primer grado contada con dibujos.
+- **Fracciones** (`/fracciones`): pintar la parte que se pide de una figura
+  partida en trozos.
 
 Las materias viven en tarjetas del inicio y no en la cabecera: van a ser
 muchas, y cuatro o cinco enlaces en una barra ya no caben. A cambio, dentro
@@ -86,6 +88,29 @@ paso hasta la división final.
 
 Cuando B es un cubo aparecen además los dos conteos concretos: los cuadrados de
 cada cara de A y el llenado capa por capa con cubitos.
+
+## Fracciones
+
+Se enseña una figura —cuadrado, tarta o triángulo— partida en piezas, y se
+pide pintar una fracción: «pinta 1/2 de este cuadrado».
+
+Lo que hace que esto enseñe algo es que **las piezas no siempre valen lo
+mismo**. Un cuadrado en tres franjas con una de ellas partida tiene piezas
+de 1/3 y de 1/6, así que medio cuadrado son una franja entera y media.
+Contar piezas no sirve: hay que mirar cuánto ocupa cada una. Dos de cada
+tres ejercicios son de ésos.
+
+Por eso **hay varias respuestas correctas** y se comprueba la suma, no el
+conjunto elegido: en una tarta de cuatro porciones con una partida, 1/2 son
+dos porciones enteras, o una entera y las dos mitades.
+
+Todo se lleva con fracciones exactas y no con decimales. 1/3 no existe en
+coma flotante, y «¿esto suma justo un medio?» tiene que tener una respuesta
+exacta.
+
+Lo que se pregunta sale de recorrer las combinaciones posibles de las
+piezas, así que siempre tiene solución, y se prefieren las fracciones que un
+niño reconoce —1/2, 1/3, 3/4— antes que 5/9.
 
 ## Ecuaciones
 

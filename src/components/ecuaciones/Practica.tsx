@@ -27,6 +27,7 @@ export function Practica() {
     registrar({
       modulo: "equations",
       tema: conPesa ? TEMAS.ecuacionConPesa : TEMAS.ecuacionSimple,
+      desafio: conPesa ? "equations.constant" : "equations.simple",
       tipo: "answer",
       acierto: opcion === peso,
       error: errorDe(opcion, { cantidad, peso, total, extra }),

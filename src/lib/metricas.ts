@@ -25,7 +25,7 @@ import {
 import { autenticacion, baseDeDatos, hayConfiguracion } from "./firebase";
 import type { TipoCuerpo } from "./cuerpos";
 
-export type Modulo = "geometry" | "equations";
+export type Modulo = "geometry" | "equations" | "fractions";
 
 /**
  * El tema es la unidad del panel: «en qué flojea el curso». Van en inglés
@@ -38,6 +38,7 @@ export const TEMAS = {
   medirVolumen: "geometry.measurevolume",
   ecuacionSimple: "equations.simple",
   ecuacionConPesa: "equations.withconstant",
+  fraccionIdentificar: "fractions.identify",
 } as const;
 
 export type Tema = (typeof TEMAS)[keyof typeof TEMAS];
@@ -48,6 +49,7 @@ export const NOMBRE_TEMA: Record<Tema, string> = {
   "geometry.measurevolume": "Medir volumen",
   "equations.simple": "Ecuaciones simples",
   "equations.withconstant": "Ecuaciones con pesa",
+  "fractions.identify": "Reconocer fracciones",
 };
 
 /** El tema de un problema de geometría, según su tipo. */
@@ -126,9 +128,31 @@ export function cronometro() {
   };
 }
 
+/**
+ * El día del niño, no el del servidor. Si practica a las once de la noche,
+ * eso es su martes aunque en Londres ya sea miércoles. El trigger lo
+ * comprueba contra su propio reloj por si llega algo disparatado.
+ */
+function hoy() {
+  const ahora = new Date();
+  const dosCifras = (n: number) => String(n).padStart(2, "0");
+
+  return [
+    ahora.getFullYear(),
+    dosCifras(ahora.getMonth() + 1),
+    dosCifras(ahora.getDate()),
+  ].join("-");
+}
+
 type Intento = {
   modulo: Modulo;
   tema: Tema;
+  /**
+   * Cuál de los desafíos del catálogo es. Más fino que el tema: dentro de
+   * reconocer fracciones no cuesta lo mismo con partes iguales que con
+   * partes distintas, y es lo que el profesor calibrará.
+   */
+  desafio: string;
   /** «answer» es un ejercicio contestado; «explore», un paseo sin respuesta */
   tipo: "answer" | "explore";
   acierto?: boolean;
@@ -156,6 +180,8 @@ export async function registrar(intento: Intento) {
       schoolId: curso?.schoolId ?? null,
       module: intento.modulo,
       topic: intento.tema,
+      challenge: intento.desafio,
+      localDate: hoy(),
       kind: intento.tipo,
       correct: intento.tipo === "answer" ? intento.acierto === true : null,
       ...(intento.error ? { errorKind: intento.error } : {}),

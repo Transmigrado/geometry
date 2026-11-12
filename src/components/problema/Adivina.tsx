@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { cronometro, registrar, type Tema } from "@/lib/metricas";
+import { DESAFIOS } from "@/lib/desafios";
+
+/** En geometría cada tema tiene un solo desafío, así que sale del catálogo. */
+function desafioDe(tema: Tema) {
+  return DESAFIOS.find((cual) => cual.tema === tema)?.id ?? tema;
+}
 
 /**
  * «Ahora te toca a ti». Antes de enseñar la cuenta, el niño dice qué le
@@ -44,6 +50,7 @@ export function Adivina({
     registrar({
       modulo: "geometry",
       tema,
+      desafio: desafioDe(tema),
       tipo: "answer",
       acierto: bien,
       duracion: reloj.ms(),
@@ -54,7 +61,13 @@ export function Adivina({
 
   function rendirse() {
     setAcierto(null);
-    registrar({ modulo: "geometry", tema, tipo: "explore", duracion: reloj.ms() });
+    registrar({
+      modulo: "geometry",
+      tema,
+      desafio: desafioDe(tema),
+      tipo: "explore",
+      duracion: reloj.ms(),
+    });
     alResolver();
   }
 

@@ -391,32 +391,75 @@ export const alGuardarIntento = onDocumentCreated(
     if (!intento || intento.kind !== "answer") return;
 
     const marca = base.doc(`counted/${evento.params.id}`);
-    const donde = base.doc(
+    const acierto = intento.correct === true ? 1 : 0;
+    const tema = limpio(intento.topic);
+    const desafio = limpio(intento.challenge) || tema;
+    const dia = diaDe(intento.localDate);
+
+    const acumulado = base.doc(
       `progress/${intento.studentId}_${intento.courseId ?? "solo"}`,
     );
+    const delDia = base.doc(`daily/${intento.studentId}_${dia}`);
+
+    const deQuien = {
+      studentId: intento.studentId,
+      courseId: intento.courseId ?? null,
+      schoolId: intento.schoolId ?? null,
+    };
+
+    const unoMas = {
+      attempts: FieldValue.increment(1),
+      correct: FieldValue.increment(acierto),
+      lastAt: FieldValue.serverTimestamp(),
+    };
 
     await base.runTransaction(async (t) => {
+      // los triggers se reintentan: sin esta marca, un reintento contaría
+      // el mismo intento dos veces
       if ((await t.get(marca)).exists) return;
 
-      const acierto = intento.correct === true ? 1 : 0;
-      const tema = String(intento.topic).replace(/[^a-z0-9.]/g, "");
+      t.set(acumulado, {
+        ...deQuien,
+        ...unoMas,
+        byTopic: { [tema]: contar(acierto) },
+      }, { merge: true });
 
-      t.set(donde, {
-        studentId: intento.studentId,
-        courseId: intento.courseId ?? null,
-        schoolId: intento.schoolId ?? null,
-        attempts: FieldValue.increment(1),
-        correct: FieldValue.increment(acierto),
-        lastAt: FieldValue.serverTimestamp(),
-        byTopic: {
-          [tema]: {
-            a: FieldValue.increment(1),
-            c: FieldValue.increment(acierto),
-          },
-        },
+      t.set(delDia, {
+        ...deQuien,
+        ...unoMas,
+        date: dia,
+        byTopic: { [tema]: contar(acierto) },
+        byChallenge: { [desafio]: contar(acierto) },
       }, { merge: true });
 
       t.set(marca, { at: FieldValue.serverTimestamp() });
     });
   },
 );
+
+function contar(acierto: number) {
+  return { a: FieldValue.increment(1), c: FieldValue.increment(acierto) };
+}
+
+function limpio(valor: unknown) {
+  return String(valor ?? "").replace(/[^a-z0-9.]/g, "");
+}
+
+/**
+ * El día al que se apunta lo que hizo. Lo dice el niño —es su calendario
+ * el que importa, no el del servidor— pero se contrasta: si viene algo
+ * absurdo, manda el reloj de aquí. Un día de margen cubre husos horarios
+ * sin dejar pasar disparates.
+ */
+function diaDe(suyo: unknown): string {
+  const hoy = new Date();
+  const comoTexto = (cual: Date) => cual.toISOString().slice(0, 10);
+
+  if (typeof suyo === "string" && /^\d{4}-\d{2}-\d{2}$/.test(suyo)) {
+    const dicho = new Date(`${suyo}T12:00:00Z`).getTime();
+    const distancia = Math.abs(dicho - hoy.getTime());
+    if (distancia < 36 * 60 * 60 * 1000) return suyo;
+  }
+
+  return comoTexto(hoy);
+}

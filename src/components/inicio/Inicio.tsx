@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import { IconoProblema } from "@/components/problema/IconoProblema";
 import { IconoBalanza } from "@/components/ecuaciones/IconoBalanza";
+import { IconoFracciones } from "@/components/fracciones/IconoFracciones";
 
 /**
  * El tablero del niño: por dónde quiere empezar hoy.
@@ -43,6 +44,14 @@ const MATERIAS: Materia[] = [
     fondo: "bg-emerald-100 hover:bg-emerald-200",
     tinta: "text-emerald-900",
     dibujo: <IconoBalanza color="#047857" />,
+  },
+  {
+    href: "/fracciones",
+    nombre: "Fracciones",
+    pie: "Pinta la parte que te piden, aunque los trozos sean distintos.",
+    fondo: "bg-violet-100 hover:bg-violet-200",
+    tinta: "text-violet-900",
+    dibujo: <IconoFracciones color="#6d28d9" />,
   },
 ];
 
