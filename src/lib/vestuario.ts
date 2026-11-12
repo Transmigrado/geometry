@@ -4,8 +4,16 @@ export const SLOTS = ["Hair", "Headwear", "Top", "Bottom", "Shoes"] as const;
 
 export type Slot = (typeof SLOTS)[number];
 
-/** Qué lleva puesto: una pieza por slot, o nada. */
-export type Atuendo = Partial<Record<Slot, string | null>>;
+/** Qué lleva puesto: una pieza por slot, de qué color, y su tono de piel. */
+export type Atuendo = {
+  piezas: Partial<Record<Slot, string | null>>;
+  /** índice en PIELES; -1 deja el tono con que vino el modelo */
+  piel: number;
+  /** índice en COLORES_ROPA por slot; sin entrada, el color original */
+  colores: Partial<Record<Slot, number>>;
+};
+
+export const SIN_COLOR = -1;
 
 export const NOMBRE_SLOT: Record<Slot, string> = {
   Hair: "Pelo",
@@ -23,8 +31,9 @@ export const OBLIGATORIOS: Slot[] = ["Top", "Bottom"];
 
 /** Con lo puesto arranca quien nunca guardó nada. */
 export const ATUENDO_INICIAL: Atuendo = {
-  Top: "Top_Basic",
-  Bottom: "Bottom_Basic",
+  piezas: { Top: "Top_Basic", Bottom: "Bottom_Basic" },
+  piel: SIN_COLOR,
+  colores: {},
 };
 
 export function archivoDe(slot: Slot) {
@@ -41,16 +50,23 @@ export function atuendoDe(json: string | null): Atuendo {
   if (!json) return ATUENDO_INICIAL;
 
   try {
-    const datos = JSON.parse(json);
-    const guardado = datos?.atuendo ?? {};
-    const atuendo: Atuendo = {};
+    const guardado = JSON.parse(json)?.atuendo ?? {};
+    const piezas: Atuendo["piezas"] = {};
+    const colores: Atuendo["colores"] = {};
 
     for (const slot of SLOTS) {
-      const pieza = guardado[slot];
-      if (typeof pieza === "string") atuendo[slot] = pieza;
+      const pieza = guardado.piezas?.[slot];
+      if (typeof pieza === "string") piezas[slot] = pieza;
+
+      const color = guardado.colores?.[slot];
+      if (Number.isInteger(color)) colores[slot] = color;
     }
 
-    return { ...ATUENDO_INICIAL, ...atuendo };
+    return {
+      piezas: { ...ATUENDO_INICIAL.piezas, ...piezas },
+      piel: Number.isInteger(guardado.piel) ? guardado.piel : SIN_COLOR,
+      colores,
+    };
   } catch {
     return ATUENDO_INICIAL;
   }

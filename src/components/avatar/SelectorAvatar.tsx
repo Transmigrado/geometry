@@ -6,6 +6,7 @@ import type { WebGLRenderer } from "three";
 import { Escena } from "./Escena";
 import { useSesion } from "@/components/auth/ProveedorSesion";
 import { guardarPerfil, leerPerfil } from "@/lib/perfil";
+import { COLORES_ROPA, PIELES, UNA_PIEZA, type Color } from "@/lib/paleta";
 import {
   archivoDe,
   ATUENDO_INICIAL,
@@ -13,6 +14,7 @@ import {
   iconoDe,
   NOMBRE_SLOT,
   OBLIGATORIOS,
+  SIN_COLOR,
   SLOTS,
   type Atuendo,
   type Slot,
@@ -49,7 +51,26 @@ export function SelectorAvatar() {
   }, [uid]);
 
   function ponerse(pieza: string | null) {
-    setAtuendo({ ...atuendo, [slot]: pieza });
+    const piezas = { ...atuendo.piezas, [slot]: pieza };
+
+    // un vestido o un overol cubre también las piernas: fuera el pantalón
+    if (slot === "Top") {
+      piezas.Bottom = pieza && UNA_PIEZA.has(pieza)
+        ? null
+        : (atuendo.piezas.Bottom ?? ATUENDO_INICIAL.piezas.Bottom);
+    }
+
+    // y al elegir pantalón, el de una pieza deja paso a una polera normal
+    const arriba = piezas.Top;
+    if (slot === "Bottom" && arriba && UNA_PIEZA.has(arriba)) {
+      piezas.Top = ATUENDO_INICIAL.piezas.Top;
+    }
+
+    setAtuendo({ ...atuendo, piezas });
+  }
+
+  function pintar(indice: number) {
+    setAtuendo({ ...atuendo, colores: { ...atuendo.colores, [slot]: indice } });
   }
 
   async function guardar() {
@@ -108,10 +129,24 @@ export function SelectorAvatar() {
             ))}
           </nav>
 
+          <Paleta
+            titulo={`Color de ${NOMBRE_SLOT[slot].toLowerCase()}`}
+            colores={COLORES_ROPA}
+            elegido={atuendo.colores[slot] ?? SIN_COLOR}
+            alElegir={pintar}
+          />
+
+          <Paleta
+            titulo="Tono de piel"
+            colores={PIELES}
+            elegido={atuendo.piel}
+            alElegir={(piel) => setAtuendo({ ...atuendo, piel })}
+          />
+
           <Suspense fallback={<Cargando />}>
             <Piezas
               slot={slot}
-              puesta={atuendo[slot] ?? null}
+              puesta={atuendo.piezas[slot] ?? null}
               alElegir={ponerse}
             />
           </Suspense>
@@ -222,6 +257,61 @@ function Ficha({
         />
       )}
     </button>
+  );
+}
+
+/** Los colores del pack, cada uno con su muestra. */
+function Paleta({
+  titulo,
+  colores,
+  elegido,
+  alElegir,
+}: {
+  titulo: string;
+  colores: Color[];
+  elegido: number;
+  alElegir: (indice: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+        {titulo}
+      </p>
+      <ul className="flex flex-wrap gap-1.5">
+        <li>
+          <button
+            type="button"
+            onClick={() => alElegir(SIN_COLOR)}
+            aria-pressed={elegido === SIN_COLOR}
+            title="El color original"
+            className={`h-7 rounded-full border-2 px-2 text-[10px] font-bold ${
+              elegido === SIN_COLOR
+                ? "border-sky-500 text-sky-700"
+                : "border-slate-200 text-slate-500"
+            }`}
+          >
+            Original
+          </button>
+        </li>
+
+        {colores.map((color, indice) => (
+          <li key={color.nombre}>
+            <button
+              type="button"
+              onClick={() => alElegir(indice)}
+              aria-pressed={indice === elegido}
+              title={color.nombre}
+              style={{ background: color.muestra }}
+              className={`h-7 w-7 rounded-full border-2 transition ${
+                indice === elegido
+                  ? "border-sky-500 ring-2 ring-sky-200"
+                  : "border-white shadow-sm hover:scale-110"
+              }`}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

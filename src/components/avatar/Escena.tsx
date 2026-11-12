@@ -2,24 +2,39 @@
 
 import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ContactShadows, OrbitControls, useGLTF, useTexture } from "@react-three/drei";
+import {
+  ContactShadows,
+  OrbitControls,
+  useGLTF,
+  useTexture,
+} from "@react-three/drei";
 import {
   MeshStandardMaterial,
   NearestFilter,
   SRGBColorSpace,
+  type BufferGeometry,
   type Mesh,
   type WebGLRenderer,
 } from "three";
+import { COLORES_ROPA, PIELES } from "@/lib/paleta";
+import { celdaPrincipal, mudarCelda, type Celda } from "@/lib/uv";
 import {
   archivoDe,
   CUERPO,
   PALETA,
+  SIN_COLOR,
   SLOTS,
   type Atuendo,
+  type Slot,
 } from "@/lib/vestuario";
 
 /** el decodificador vive en public, para no depender de un CDN ajeno */
 const DRACO = "/draco/";
+
+/** Un top que suba por encima de esta parte del cuerpo lleva capucha, y
+ * uno que baje de esta otra trae botas: entonces tapan gorro y zapatos. */
+const ALTURA_CAPUCHA = 0.85;
+const ALTURA_BOTAS = 0.03;
 
 type Props = {
   atuendo: Atuendo;
@@ -32,8 +47,6 @@ export function Escena({ atuendo, alCrear }: Props) {
     <Canvas
       shadows
       dpr={[1, 2]}
-      // el personaje mide 1,7 con los pies en el suelo: la cámara lo mira
-      // desde su cintura y a distancia suficiente para que entre entero
       camera={{ position: [0, 0.95, 3.7], fov: 32 }}
       // sin esto la miniatura sale en negro
       gl={{ preserveDrawingBuffer: true }}
@@ -67,6 +80,14 @@ export function Escena({ atuendo, alCrear }: Props) {
 
 function Personaje({ atuendo }: { atuendo: Atuendo }) {
   const paleta = useTexture(PALETA);
+  const cuerpo = useGLTF(CUERPO, DRACO);
+  const vestuario = {
+    Hair: useGLTF(archivoDe("Hair"), DRACO),
+    Headwear: useGLTF(archivoDe("Headwear"), DRACO),
+    Top: useGLTF(archivoDe("Top"), DRACO),
+    Bottom: useGLTF(archivoDe("Bottom"), DRACO),
+    Shoes: useGLTF(archivoDe("Shoes"), DRACO),
+  };
 
   const material = useMemo(() => {
     // se clona para poder ajustarla sin tocar la que guarda el cargador
@@ -84,48 +105,130 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     return new MeshStandardMaterial({ map: mapa, roughness: 0.9 });
   }, [paleta]);
 
+  const piel = cuerpo.nodes.Cuerpo as Mesh | undefined;
+
+  /** El tono de piel vive en una celda, y esa misma celda aparece en las
+   * prendas que dejan ver brazos o cuello. */
+  const cambioDePiel = useMemo(() => {
+    if (atuendo.piel === SIN_COLOR || !piel?.geometry) return null;
+    const desde = celdaPrincipal(piel.geometry);
+    const hasta = PIELES[atuendo.piel]?.celda;
+    return desde && hasta ? { desde, hasta: hasta as Celda } : null;
+  }, [atuendo.piel, piel]);
+
+  const puesto = (slot: Slot) => {
+    const nombre = atuendo.piezas[slot];
+    if (!nombre) return null;
+    return (vestuario[slot].nodes[nombre] as Mesh | undefined) ?? null;
+  };
+
+  const tapados = aQueTapa(puesto("Top"), piel);
+
   return (
     <group>
-      <Pieza archivo={CUERPO} nombre="Cuerpo" material={material} />
-      {SLOTS.map((slot) => (
-        <Pieza
-          key={slot}
-          archivo={archivoDe(slot)}
-          nombre={atuendo[slot] ?? null}
-          material={material}
-        />
-      ))}
+      <Pieza malla={piel} material={material} piel={cambioDePiel} />
+
+      {SLOTS.map((slot) => {
+        if (tapados.includes(slot)) return null;
+        const indice = atuendo.colores[slot];
+
+        return (
+          <Pieza
+            key={slot}
+            malla={puesto(slot)}
+            material={material}
+            piel={cambioDePiel}
+            color={
+              indice === undefined || indice === SIN_COLOR
+                ? null
+                : (COLORES_ROPA[indice]?.celda as Celda)
+            }
+          />
+        );
+      })}
     </group>
   );
 }
 
-function Pieza({
-  archivo,
-  nombre,
-  material,
-}: {
-  archivo: string;
-  nombre: string | null;
-  material: MeshStandardMaterial;
-}) {
-  // se carga igual aunque no haya nada puesto, para que al elegir ya esté
-  const { nodes } = useGLTF(archivo, DRACO);
+/**
+ * El pack no marca qué prenda tapa a cuál: lo deduce de su tamaño. Un top
+ * que llega a la cabeza trae capucha, y uno que llega al suelo trae botas.
+ */
+function aQueTapa(top: Mesh | null, cuerpo: Mesh | undefined): Slot[] {
+  if (!top?.geometry || !cuerpo?.geometry) return [];
 
-  if (!nombre) return null;
-  const nodo = nodes[nombre] as Mesh | undefined;
-  if (!nodo?.geometry) return null;
+  cuerpo.geometry.computeBoundingBox();
+  top.geometry.computeBoundingBox();
+  const limites = cuerpo.geometry.boundingBox;
+  const suyo = top.geometry.boundingBox;
+  if (!limites || !suyo) return [];
+
+  const alto = limites.max.y - limites.min.y;
+  const tapados: Slot[] = [];
+
+  if (suyo.max.y > limites.min.y + alto * ALTURA_CAPUCHA) {
+    tapados.push("Headwear");
+  }
+  if (suyo.min.y < limites.min.y + alto * ALTURA_BOTAS) {
+    tapados.push("Shoes");
+  }
+
+  return tapados;
+}
+
+function Pieza({
+  malla,
+  material,
+  piel,
+  color,
+}: {
+  malla: Mesh | null | undefined;
+  material: MeshStandardMaterial;
+  piel: { desde: Celda; hasta: Celda } | null;
+  color?: Celda | null;
+}) {
+  const geometria = useMemo(() => {
+    if (!malla?.geometry) return null;
+    return recolorear(malla.geometry, piel, color ?? null);
+  }, [malla, piel, color]);
+
+  if (!malla || !geometria) return null;
 
   return (
     <mesh
-      geometry={nodo.geometry}
+      geometry={geometria}
       material={material}
-      position={nodo.position}
-      quaternion={nodo.quaternion}
-      scale={nodo.scale}
+      position={malla.position}
+      quaternion={malla.quaternion}
+      scale={malla.scale}
       castShadow
       receiveShadow
     />
   );
+}
+
+/** Deja la malla original intacta: la comparten todas las piezas iguales. */
+function recolorear(
+  original: BufferGeometry,
+  piel: { desde: Celda; hasta: Celda } | null,
+  color: Celda | null,
+) {
+  const principal = color ? celdaPrincipal(original) : null;
+  const cambios = [];
+
+  // la ropa manda sobre la piel, igual que en el pack
+  if (color && principal) cambios.push({ desde: principal, hasta: color });
+  if (piel) cambios.push(piel);
+  if (!cambios.length) return original;
+
+  const uv = original.getAttribute("uv");
+  if (!uv) return original;
+
+  const copia = original.clone();
+  const mudado = mudarCelda(uv.array as Float32Array, cambios);
+  copia.setAttribute("uv", uv.clone().copyArray(mudado));
+
+  return copia;
 }
 
 function Plataforma() {
