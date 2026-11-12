@@ -21,7 +21,7 @@ import {
   type WebGLRenderer,
 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { anclasDe, calzar, esconder } from "@/lib/calce";
+import { anclasDe, anclasDentroDe, calzar } from "@/lib/calce";
 import { COLORES_ROPA, PIELES } from "@/lib/paleta";
 import { celdaPrincipal, mudarCelda, type Celda } from "@/lib/uv";
 import {
@@ -44,8 +44,12 @@ const ALTURA_BOTAS = 0.03;
 /** de aquí para arriba empieza la cabeza, que es lo que tapa una capucha */
 const ALTURA_CABEZA = 1.2;
 
-/** cuánto se hunde la piel bajo la ropa para que no asome al animarse */
-const MARGEN_PIEL = 0.012;
+/**
+ * Desde cuán adentro del cuerpo sale el rayo que mete la piel bajo la ropa.
+ * Tiene que pasar de lo que la piel llegue a sobresalir —un muslo se sale
+ * del peto más de lo que parece— sin llegar a la otra cara del miembro.
+ */
+const HONDURA_PIEL = 0.05;
 
 /**
  * Cuánto se mete la prenda de dentro por debajo de la de fuera. Dos
@@ -225,11 +229,26 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atuendo.piezas, calzadas, tapadosClave]);
 
-  /** La piel, hundida bajo lo que lleve puesto. */
-  const cuerpo = useMemo(
-    () => (piel ? esconder(geometriaBase(piel), puestas, MARGEN_PIEL) : null),
-    [piel, puestas],
-  );
+  /**
+   * La piel, metida bajo lo que lleve puesto. Es el mismo calce de las
+   * prendas, con el cuerpo como la capa de más adentro: a cada vértice se le
+   * tira un rayo desde dentro hacia fuera, y si encuentra tela, la piel se
+   * queda justo por debajo.
+   */
+  const cuerpo = useMemo(() => {
+    const base = piel ? geometriaBase(piel) : null;
+    if (!base) return null;
+
+    const anclas = anclasDentroDe(base, HONDURA_PIEL);
+    const reloj = performance.now();
+    const salida = puestas.reduce(
+      (piel, prenda) =>
+        calzar(piel, anclas, prenda, { hueco: HOLGURA, minimo: PEGADO }),
+      base,
+    );
+    console.log("[PIEL]", Math.round(performance.now() - reloj), "ms,", base.getAttribute("position").count, "vertices,", puestas.length, "prendas");
+    return salida;
+  }, [piel, puestas]);
 
   /**
    * De todas las mallas del archivo se muestra el cuerpo y una prenda por

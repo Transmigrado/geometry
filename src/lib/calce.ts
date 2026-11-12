@@ -18,7 +18,6 @@ import {
   acceleratedRaycast,
   computeBoundsTree,
   disposeBoundsTree,
-  type MeshBVH,
 } from "three-mesh-bvh";
 
 // sin esto cada rayo recorrería todos los triángulos, y son miles
@@ -81,58 +80,38 @@ const rayo = new Raycaster();
 const desde = new Vector3();
 const hacia = new Vector3();
 const punto = new Vector3();
-const cercano = { point: new Vector3(), distance: 0, faceIndex: 0 };
-
 /**
- * Mete la piel bajo la ropa. En reposo la prenda queda justo por fuera, pero
- * las dos superficies tienen pesos distintos y al animarse se deforman cada
- * una por su lado: entonces la piel asoma por el hombro, por el tobillo o
- * por la costura. Así que donde hay prenda cerca, la piel se hunde, y se
- * hunde menos cuanto más lejos esté, para que no se note ningún escalón.
+ * Anclas para el propio cuerpo: desde cada vértice, un punto metido hacia
+ * dentro siguiendo su normal. Con eso la piel se calza bajo la ropa con el
+ * mismo rayo que una prenda bajo otra, que es lo que hace falta cuando la
+ * piel no está rozando la tela sino saliéndose por ella.
  */
-export function esconder(
+export function anclasDentro(
   cuerpo: BufferGeometry,
-  prendas: BufferGeometry[],
-  margen: number,
-): BufferGeometry {
+  hondura: number,
+): Float32Array {
   const posicion = cuerpo.getAttribute("position");
   const normales = cuerpo.getAttribute("normal");
-  if (!prendas.length || !normales) return cuerpo;
-
-  for (const prenda of prendas) {
-    if (!prenda.boundsTree) prenda.computeBoundsTree();
-  }
-
-  const movido = Float32Array.from(posicion.array as Float32Array);
-  let cambio = false;
+  const anclas = new Float32Array(posicion.count * 3);
 
   for (let i = 0; i < posicion.count; i += 1) {
-    punto.set(movido[i * 3], movido[i * 3 + 1], movido[i * 3 + 2]);
-
-    let cerca = margen;
-    for (const prenda of prendas) {
-      // computeBoundsTree arma un MeshBVH, pero el paquete lo declara con el
-      // tipo del padre, que no sabe buscar el punto más cercano
-      const arbol = prenda.boundsTree as MeshBVH | undefined;
-      const roce = arbol?.closestPointToPoint(punto, cercano, 0, cerca);
-      if (roce) cerca = roce.distance;
-    }
-    if (cerca >= margen) continue;
-
-    const hundir = margen - cerca;
-    movido[i * 3] -= normales.getX(i) * hundir;
-    movido[i * 3 + 1] -= normales.getY(i) * hundir;
-    movido[i * 3 + 2] -= normales.getZ(i) * hundir;
-    cambio = true;
+    anclas[i * 3] = posicion.getX(i) - normales.getX(i) * hondura;
+    anclas[i * 3 + 1] = posicion.getY(i) - normales.getY(i) * hondura;
+    anclas[i * 3 + 2] = posicion.getZ(i) - normales.getZ(i) * hondura;
   }
 
-  if (!cambio) return cuerpo;
+  return anclas;
+}
 
-  const hundida = cuerpo.clone();
-  hundida.setAttribute("position", new BufferAttribute(movido, 3));
-  hundida.computeVertexNormals();
+const adentro = new WeakMap<BufferGeometry, Float32Array>();
 
-  return hundida;
+export function anclasDentroDe(cuerpo: BufferGeometry, hondura: number) {
+  let anclas = adentro.get(cuerpo);
+  if (!anclas) {
+    anclas = anclasDentro(cuerpo, hondura);
+    adentro.set(cuerpo, anclas);
+  }
+  return anclas;
 }
 
 export type Calce = {
