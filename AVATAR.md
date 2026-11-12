@@ -105,6 +105,23 @@ hacia él, y si en el camino aparece la prenda exterior, el vértice se queda
 justo por dentro. Así el pantalón entra en la polera y el pelo bajo el
 gorro, sin cruzarse.
 
+**El rayo va a dos caras**, y no es un detalle menor: sale de dentro del
+cuerpo, así que lo primero que encuentra es la cara *interior* de la prenda,
+que para el raycaster es una cara trasera. Mirando sólo las de frente ese
+choque no existe, no se encontraba ninguno y el calce entero no hacía nada.
+
+**Y se mete dos centímetros, no dos milímetros.** Con una bota alta, que va
+pegada a la pierna, dos milímetros dejaban el pantalón justo sobre la caña y
+asomaba a jirones. Los zapatos bajos no cambian, porque sólo se mueve lo que
+el rayo encuentra tapado.
+
+Lo que el calce no arregla son los pelos sueltos que nacen bajo el borde del
+gorro y se curvan por delante: su rayo no llega a cruzar la tela, así que no
+hay nada que corregir. Hundirlos por su propia normal tampoco sirve —una
+mecha fina tiene normales opuestas en cada cara y sólo se aplasta sobre sí
+misma—; haría falta recogerlos hacia el cuero cabelludo, y eso también
+recogería el pelo que legítimamente asoma bajo el ala.
+
 Buscar el punto del cuerpo del que nace cada vértice es lo caro, pero no
 cambia nunca y se guarda. Los rayos van por BVH (`three-mesh-bvh`), porque
 sin él cada uno recorrería miles de triángulos.

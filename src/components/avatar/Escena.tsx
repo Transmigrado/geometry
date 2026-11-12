@@ -46,19 +46,29 @@ const ALTURA_CABEZA = 1.2;
 /** cuánto se hunde la piel bajo la ropa para que no asome al animarse */
 const MARGEN_PIEL = 0.012;
 
-/** Qué se mete bajo qué, con cuánto aire, tal como lo hace el pack. */
+/**
+ * Cuánto se mete la prenda de dentro por debajo de la de fuera. Dos
+ * milímetros no bastan: con una bota alta, que va pegada a la pierna, el
+ * pantalón acaba justo sobre la caña y asoma a jirones. Con dos centímetros
+ * desaparece bajo la bota y los zapatos bajos siguen viéndose igual, porque
+ * sólo se mueve lo que el rayo encuentra tapado.
+ */
+const HOLGURA = 0.02;
+
+/** y esto es lo mínimo que la prenda se despega de la piel */
+const PEGADO = 0.0005;
+
+/** Qué se mete bajo qué, tal como lo hace el pack. */
 const CALCES: {
   dentro: Slot;
   fuera: Slot;
-  hueco: number;
-  minimo: number;
   soloArriba?: boolean;
 }[] = [
-  { dentro: "Bottom", fuera: "Shoes", hueco: 0.003, minimo: 0.002 },
-  { dentro: "Bottom", fuera: "Top", hueco: 0.004, minimo: 0.003 },
-  { dentro: "Headwear", fuera: "Top", hueco: 0.004, minimo: 0.004, soloArriba: true },
-  { dentro: "Hair", fuera: "Headwear", hueco: 0.004, minimo: 0.002 },
-  { dentro: "Hair", fuera: "Top", hueco: 0.004, minimo: 0.002, soloArriba: true },
+  { dentro: "Bottom", fuera: "Shoes" },
+  { dentro: "Bottom", fuera: "Top" },
+  { dentro: "Headwear", fuera: "Top", soloArriba: true },
+  { dentro: "Hair", fuera: "Headwear" },
+  { dentro: "Hair", fuera: "Top", soloArriba: true },
 ];
 
 type Props = {
@@ -174,7 +184,7 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     const original = (slot: Slot) =>
       tapados.includes(slot) ? null : mallaBase(puesto(slot));
 
-    for (const { dentro, fuera, hueco, minimo, soloArriba } of CALCES) {
+    for (const { dentro, fuera, soloArriba } of CALCES) {
       const interior = original(dentro);
       const exterior = original(fuera);
       if (!interior || !exterior) continue;
@@ -182,8 +192,8 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
       ajustadas.set(
         dentro,
         calzar(ajustadas.get(dentro) ?? interior, anclasDe(interior, base), exterior, {
-          hueco,
-          minimo,
+          hueco: HOLGURA,
+          minimo: PEGADO,
           solo: soloArriba ? (altura) => altura > ALTURA_CABEZA : undefined,
         }),
       );
