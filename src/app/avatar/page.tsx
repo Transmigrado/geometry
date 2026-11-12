@@ -1,5 +1,5 @@
 import { Protegido } from "@/components/auth/Protegido";
-import { CreadorAvatar } from "@/components/avatar/CreadorAvatar";
+import { SelectorAvatar } from "@/components/avatar/SelectorAvatar";
 
 export const metadata = {
   title: "Tu avatar | Materama",
@@ -9,7 +9,7 @@ export const metadata = {
 export default function AvatarPage() {
   return (
     <Protegido>
-      <CreadorAvatar />
+      <SelectorAvatar />
     </Protegido>
   );
 }

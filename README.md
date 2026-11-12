@@ -7,8 +7,8 @@ calcularlas. Tiene dos módulos:
 - **Ecuaciones**: descubrir cuánto pesa cada fruta mirando una pesa, que es
   una ecuación de primer grado contada con dibujos.
 
-Cada usuario tiene además su **avatar en 3D**, hecho con un creador de Unity
-que vive aparte: ver [UNITY.md](UNITY.md).
+Cada usuario tiene además su **avatar en 3D**, que se arma en el navegador
+con Three.js: ver [AVATAR.md](AVATAR.md).
 
 ## Geometría
 
