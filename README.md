@@ -89,6 +89,34 @@ antes de repartir y olvidar repartir después de restarla.
 - Next.js 16 (App Router, Turbopack)
 - React 19 + TypeScript
 - Tailwind CSS 4
+- Redux Toolkit + Redux Saga
+
+## El estado
+
+El perfil vive en el store (`src/estado/`), y es lo único que hay ahí: la
+sesión la sigue llevando Firebase por su cuenta y cada pantalla guarda lo
+suyo con `useState`, que para un wizard o un ejercicio sobra.
+
+Las acciones terminadas en **«Pedido»** no las resuelve ningún reducer: sólo
+dejan constancia de que algo está en marcha y son el aviso para la saga, que
+es la que habla con Firestore y despacha el resultado.
+
+- **Leer** va con `takeLatest`: si llegan dos lecturas seguidas —cambiar de
+  cuenta— la respuesta tardía de la primera no debe pisar a la segunda.
+- **Guardar** va con `takeEvery`: cada guardado escribe campos distintos y
+  descartar uno a medias perdería lo que el niño acaba de contestar.
+
+Las pantallas esperan a que termine el guardado para pasar al paso
+siguiente, así que `usePerfil().guardar` devuelve una promesa. Quien la
+cumple es la saga, con un aviso que viaja en el `meta` de la acción —ahí y
+no en el payload, porque es una función y el payload tiene que poder
+serializarse—.
+
+El store se crea **uno por cliente**, no uno de módulo: en el servidor el
+módulo se comparte entre peticiones y mezclaría el perfil de un usuario con
+el de otro. Y va dentro de un `Suspense` en el layout porque Redux le pone
+un sufijo al azar a su acción de arranque, que no se puede hornear en el
+HTML estático.
 
 ## Desarrollo
 
