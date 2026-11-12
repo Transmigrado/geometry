@@ -1,11 +1,17 @@
 # Materama
 
 App web para que niños vean las matemáticas del colegio, en vez de solo
-calcularlas. Tiene dos módulos:
+calcularlas. El niño entra a un tablero y elige materia:
 
-- **Geometría**: armar y visualizar problemas de superficie y volumen.
-- **Ecuaciones**: descubrir cuánto pesa cada fruta mirando una pesa, que es
-  una ecuación de primer grado contada con dibujos.
+- **Geometría** (`/geometria`): armar y visualizar problemas de superficie y
+  volumen.
+- **Ecuaciones** (`/ecuaciones`): descubrir cuánto pesa cada fruta mirando
+  una pesa, que es una ecuación de primer grado contada con dibujos.
+
+Las materias viven en tarjetas del inicio y no en la cabecera: van a ser
+muchas, y cuatro o cinco enlaces en una barra ya no caben. A cambio, dentro
+de una materia la cabecera lleva un «← Inicio», porque el logo no le dice
+«vuelve atrás» a un chico de diez años.
 
 Cada usuario tiene además su **avatar en 3D**, que se arma en el navegador
 con Three.js: ver [AVATAR.md](AVATAR.md).
