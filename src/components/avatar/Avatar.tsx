@@ -1,6 +1,7 @@
 "use client";
 
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
+import { rolDe } from "@/lib/roles";
 
 /**
  * La carita del usuario. Del alumno sale el retrato de su muñeco; de los
@@ -9,7 +10,7 @@ import { usePerfil } from "@/components/auth/ProveedorPerfil";
  */
 export function Avatar({ className = "h-10 w-10 text-lg" }: { className?: string }) {
   const { perfil } = usePerfil();
-  const cara = perfil.rol === "student" ? perfil.miniatura : perfil.foto;
+  const cara = rolDe(perfil) === "student" ? perfil.miniatura : perfil.foto;
 
   return (
     <span

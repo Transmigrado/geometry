@@ -1,5 +1,6 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { baseDeDatos } from "./firebase";
+import { HAY_COLEGIOS } from "./interruptores";
 
 export type Perfil = {
   /** cómo quiere que le digamos */
@@ -88,6 +89,9 @@ const LLENA: Record<Paso, readonly (keyof Perfil)[]> = {
  * de nacimiento ni se le hace armar un avatar: eso es de los niños.
  */
 export function pasosDe(rol: Rol): readonly Paso[] {
+  // sin colegios todo el mundo es alumno, así que no hay nada que elegir
+  if (!HAY_COLEGIOS) return ["nombre", "nacimiento", "avatar"];
+
   return rol === "student"
     ? ["perfil", "nombre", "nacimiento", "avatar"]
     : ["perfil", "nombre"];
@@ -96,7 +100,7 @@ export function pasosDe(rol: Rol): readonly Paso[] {
 /** El primer paso sin contestar, o nada si ya no hay nada que preguntar. */
 export function pasoPendiente(perfil: Perfil): Paso | null {
   if (perfil.listo) return null;
-  return pasosDe(perfil.rol).find(
+  return pasosDe(HAY_COLEGIOS ? perfil.rol : "student").find(
     (paso) => LLENA[paso].some((campo) => !perfil[campo]),
   ) ?? null;
 }

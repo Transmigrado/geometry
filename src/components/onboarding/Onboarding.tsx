@@ -14,7 +14,7 @@ import {
   type Perfil,
   type Rol,
 } from "@/lib/perfil";
-import { CASA, PERFILES } from "@/lib/roles";
+import { CASA, PERFILES, rolDe } from "@/lib/roles";
 
 const TITULO: Record<Paso, string> = {
   perfil: "¿Quién eres?",
@@ -46,11 +46,11 @@ export function Onboarding() {
   // quien llega sin nombre empieza por el principio; quien ya había
   // empezado, donde lo dejó. Desde ahí manda él: puede volver atrás a
   // corregirse sin tener que borrar lo que ya puso
-  const [paso, setPaso] = useState<Paso>(() =>
-    perfil.nombre ? (pasoPendiente(perfil) ?? "perfil") : "perfil",
+  const [paso, setPaso] = useState<Paso>(
+    () => pasoPendiente(perfil) ?? pasosDe(rolDe(perfil))[0],
   );
 
-  const pasos = pasosDe(perfil.rol);
+  const pasos = pasosDe(rolDe(perfil));
   const cual = pasos.indexOf(paso);
   const anterior = pasos[cual - 1];
 
@@ -85,7 +85,7 @@ export function Onboarding() {
       {paso === "nombre" && (
         <PreguntaNombre
           alSeguir={() =>
-            perfil.rol === "student" ? setPaso("nacimiento") : undefined
+            rolDe(perfil) === "student" ? setPaso("nacimiento") : undefined
           }
         />
       )}
@@ -255,7 +255,7 @@ function useGuardarPaso() {
   return async (cambios: Partial<Perfil>) => {
     const sellados = conSello(perfil, cambios);
     await guardar(sellados);
-    if (sellados.listo) router.replace(CASA[{ ...perfil, ...sellados }.rol]);
+    if (sellados.listo) router.replace(CASA[rolDe({ ...perfil, ...sellados })]);
   };
 }
 

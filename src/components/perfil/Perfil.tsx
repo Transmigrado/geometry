@@ -8,12 +8,14 @@ import { Alumno } from "./Alumno";
 import { Cambiar } from "./Cambiar";
 import { Foto } from "./Foto";
 import { edadDe, fechaLarga } from "@/lib/perfil";
+import { rolDe } from "@/lib/roles";
 
 /** Lo que sabemos de quien entró, y la puerta para cambiar su avatar. */
 export function Perfil() {
   const { perfil } = usePerfil();
   const { usuario, salir } = useSesion();
 
+  const esAlumno = rolDe(perfil) === "student";
   const edad = edadDe(perfil.nacimiento);
   const cumpleanos = fechaLarga(perfil.nacimiento);
 
@@ -28,7 +30,7 @@ export function Perfil() {
           <p className="text-2xl font-extrabold text-slate-800">
             {[perfil.nombre, perfil.apellido].filter(Boolean).join(" ")}
           </p>
-          {perfil.rol === "student" && (
+          {esAlumno && (
             <Link
               href="/avatar"
               className="rounded-full bg-sky-500 px-6 py-3 font-bold text-white shadow transition hover:bg-sky-600"
@@ -53,7 +55,7 @@ export function Perfil() {
         <Dato nombre="Correo" valor={usuario?.email ?? null} />
       </section>
 
-      {perfil.rol === "student" ? <Alumno /> : <Foto />}
+      {esAlumno ? <Alumno /> : <Foto />}
 
       <Cambiar />
 

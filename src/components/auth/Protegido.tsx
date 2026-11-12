@@ -7,7 +7,7 @@ import { usePerfil } from "./ProveedorPerfil";
 import { useSesion } from "./ProveedorSesion";
 import { Onboarding } from "@/components/onboarding/Onboarding";
 import { pasoPendiente } from "@/lib/perfil";
-import { CASA, leToca } from "@/lib/roles";
+import { CASA, leToca, rolDe } from "@/lib/roles";
 
 /**
  * Lo que hay detrás solo se ve con la sesión iniciada, con el perfil
@@ -24,7 +24,7 @@ export function Protegido({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const donde = usePathname();
 
-  const rol = perfil.perfil.rol;
+  const rol = rolDe(perfil.perfil);
   const dentro = Boolean(usuario) && !cargando && !perfil.cargando
     && !pasoPendiente(perfil.perfil);
   const suSitio = dentro && leToca(rol, donde);

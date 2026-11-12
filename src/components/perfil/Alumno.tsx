@@ -5,9 +5,16 @@ import { canjearCodigo, generarCodigoFamilia } from "@/lib/colegio";
 import {
   Aviso, BOTON, CAMPO, Codigo, ETIQUETA, Tarjeta, porque,
 } from "@/components/paneles/piezas";
+import { HAY_COLEGIOS } from "@/lib/interruptores";
 
-/** Lo que sólo le sirve a un alumno: su curso y su familia. */
+/**
+ * Lo que sólo le sirve a un alumno: su curso y su familia. Las dos cosas
+ * cuelgan de que haya colegios encendidos; sin ellos, un niño entra y
+ * resuelve problemas y ya está.
+ */
 export function Alumno() {
+  if (!HAY_COLEGIOS) return null;
+
   return (
     <>
       <Unirse />

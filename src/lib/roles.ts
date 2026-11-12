@@ -5,7 +5,8 @@
  * decide a dónde mandar a cada uno y qué enlaces pintar.
  */
 
-import type { Rol } from "./perfil";
+import { HAY_COLEGIOS } from "./interruptores";
+import type { Perfil, Rol } from "./perfil";
 
 export const NOMBRE_ROL: Record<Rol, string> = {
   student: "Alumno",
@@ -62,6 +63,19 @@ export const MENU: Record<Rol, { href: string; nombre: string }[]> = {
 };
 
 /**
+ * Con qué rol anda alguien de verdad. Si los colegios están apagados, da
+ * igual lo que diga su perfil: todo el mundo es alumno.
+ *
+ * Esto no es por pulcritud. Quien hubiera quedado como profesor en la base
+ * y entrara con los colegios apagados iría a «/profesor», que estaría
+ * cerrado, que le mandaría a su casa, que es «/profesor»… y así para
+ * siempre.
+ */
+export function rolDe(perfil: Perfil): Rol {
+  return HAY_COLEGIOS ? perfil.rol : "student";
+}
+
+/**
  * Las herramientas son de los alumnos. Un profesor que entre a «/» no
  * está haciendo nada malo, simplemente no es su sitio: se le manda al
  * suyo en vez de enseñarle un wizard que no le sirve.
@@ -71,5 +85,8 @@ export function leToca(rol: Rol, ruta: string) {
   // el muñeco 3D es cosa de niños; los adultos suben una foto y ya
   if (ruta === "/avatar") return rol === "student";
   if (rol === "student") return ruta === "/" || ruta === "/ecuaciones";
-  return ruta.startsWith(CASA[rol]);
+
+  // con los colegios apagados nadie es otra cosa que alumno, así que sus
+  // paneles quedan cerrados aunque alguien escriba la dirección a mano
+  return HAY_COLEGIOS && ruta.startsWith(CASA[rol]);
 }

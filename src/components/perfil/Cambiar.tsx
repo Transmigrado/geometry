@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import { Aviso, Tarjeta, porque } from "@/components/paneles/piezas";
+import { HAY_COLEGIOS } from "@/lib/interruptores";
 import type { Rol } from "@/lib/perfil";
 import { CASA, PERFILES } from "@/lib/roles";
 
@@ -20,6 +21,10 @@ export function Cambiar() {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  // sin colegios no hay más perfil que el de alumno, así que no hay nada
+  // que elegir
+  if (!HAY_COLEGIOS) return null;
 
   async function cambiar(rol: Rol) {
     setAviso(null);
