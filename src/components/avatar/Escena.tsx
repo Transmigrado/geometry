@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   ContactShadows,
   OrbitControls,
@@ -9,18 +9,22 @@ import {
   useTexture,
 } from "@react-three/drei";
 import {
+  AnimationMixer,
   MeshStandardMaterial,
   NearestFilter,
+  SkinnedMesh,
   SRGBColorSpace,
   type BufferGeometry,
-  type Mesh,
+  type Group,
+  type Object3D,
   type WebGLRenderer,
 } from "three";
-import { anclasDe, calzar } from "@/lib/calce";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { anclasDe, calzar, esconder } from "@/lib/calce";
 import { COLORES_ROPA, PIELES } from "@/lib/paleta";
 import { celdaPrincipal, mudarCelda, type Celda } from "@/lib/uv";
 import {
-  archivoDe,
+  AVATAR,
   CUERPO,
   PALETA,
   SIN_COLOR,
@@ -38,6 +42,9 @@ const ALTURA_CAPUCHA = 0.85;
 const ALTURA_BOTAS = 0.03;
 /** de aquí para arriba empieza la cabeza, que es lo que tapa una capucha */
 const ALTURA_CABEZA = 1.2;
+
+/** cuánto se hunde la piel bajo la ropa para que no asome al animarse */
+const MARGEN_PIEL = 0.012;
 
 /** Qué se mete bajo qué, con cuánto aire, tal como lo hace el pack. */
 const CALCES: {
@@ -98,14 +105,7 @@ export function Escena({ atuendo, alCrear }: Props) {
 
 function Personaje({ atuendo }: { atuendo: Atuendo }) {
   const paleta = useTexture(PALETA);
-  const cuerpo = useGLTF(CUERPO, DRACO);
-  const vestuario = {
-    Hair: useGLTF(archivoDe("Hair"), DRACO),
-    Headwear: useGLTF(archivoDe("Headwear"), DRACO),
-    Top: useGLTF(archivoDe("Top"), DRACO),
-    Bottom: useGLTF(archivoDe("Bottom"), DRACO),
-    Shoes: useGLTF(archivoDe("Shoes"), DRACO),
-  };
+  const avatar = useGLTF(AVATAR, DRACO);
 
   const material = useMemo(() => {
     // se clona para poder ajustarla sin tocar la que guarda el cargador
@@ -123,21 +123,43 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     return new MeshStandardMaterial({ map: mapa, roughness: 0.9 });
   }, [paleta]);
 
-  const piel = cuerpo.nodes.Cuerpo as Mesh | undefined;
+  /** Cuerpo, ropa y esqueleto salen del mismo archivo y de un solo
+   * esqueleto, así que la ropa se mueve con el cuerpo sin más. */
+  const escena = useMemo(() => clone(avatar.scene) as Group, [avatar.scene]);
+
+  /** El personaje respira en vez de quedarse en cruz. */
+  const bailarin = useRef<AnimationMixer | null>(null);
+  const reposo = avatar.animations[0];
+
+  useEffect(() => {
+    if (!reposo) return;
+
+    const mezclador = new AnimationMixer(escena);
+    mezclador.clipAction(reposo).play();
+    bailarin.current = mezclador;
+
+    return () => {
+      mezclador.stopAllAction();
+      bailarin.current = null;
+    };
+  }, [escena, reposo]);
+
+  useFrame((_, paso) => bailarin.current?.update(paso));
+
+  const piel = useMemo(() => buscarMalla(escena, CUERPO), [escena]);
 
   /** El tono de piel vive en una celda, y esa misma celda aparece en las
    * prendas que dejan ver brazos o cuello. */
   const cambioDePiel = useMemo(() => {
-    if (atuendo.piel === SIN_COLOR || !piel?.geometry) return null;
-    const desde = celdaPrincipal(piel.geometry);
+    if (atuendo.piel === SIN_COLOR || !piel) return null;
+    const desde = celdaPrincipal(geometriaBase(piel));
     const hasta = PIELES[atuendo.piel]?.celda;
     return desde && hasta ? { desde, hasta: hasta as Celda } : null;
   }, [atuendo.piel, piel]);
 
   const puesto = (slot: Slot) => {
     const nombre = atuendo.piezas[slot];
-    if (!nombre) return null;
-    return (vestuario[slot].nodes[nombre] as Mesh | undefined) ?? null;
+    return nombre ? buscarMalla(escena, nombre) : null;
   };
 
   const tapados = aQueTapa(puesto("Top"), piel);
@@ -146,11 +168,11 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
   /** Las prendas se acomodan unas bajo otras antes de pintarlas. */
   const calzadas = useMemo(() => {
     const ajustadas = new Map<Slot, BufferGeometry>();
-    const cuerpo = piel?.geometry;
-    if (!cuerpo) return ajustadas;
+    const base = piel ? geometriaBase(piel) : null;
+    if (!base) return ajustadas;
 
     const original = (slot: Slot) =>
-      tapados.includes(slot) ? null : (puesto(slot)?.geometry ?? null);
+      tapados.includes(slot) ? null : mallaBase(puesto(slot));
 
     for (const { dentro, fuera, hueco, minimo, soloArriba } of CALCES) {
       const interior = original(dentro);
@@ -159,7 +181,7 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
 
       ajustadas.set(
         dentro,
-        calzar(ajustadas.get(dentro) ?? interior, anclasDe(interior, cuerpo), exterior, {
+        calzar(ajustadas.get(dentro) ?? interior, anclasDe(interior, base), exterior, {
           hueco,
           minimo,
           solo: soloArriba ? (altura) => altura > ALTURA_CABEZA : undefined,
@@ -171,38 +193,110 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atuendo.piezas, piel, tapadosClave]);
 
-  return (
-    <group>
-      <Pieza malla={piel} material={material} piel={cambioDePiel} />
+  /** La prenda que se lleva en cada slot, ya calzada: es lo que tapa. */
+  const puestas = useMemo(() => {
+    const todas: BufferGeometry[] = [];
 
-      {SLOTS.map((slot) => {
-        if (tapados.includes(slot)) return null;
-        const indice = atuendo.colores[slot];
+    for (const slot of SLOTS) {
+      if (tapados.includes(slot)) continue;
+      const malla = puesto(slot);
+      if (malla) todas.push(calzadas.get(slot) ?? geometriaBase(malla));
+    }
 
-        return (
-          <Pieza
-            key={slot}
-            malla={puesto(slot)}
-            calzada={calzadas.get(slot)}
-            material={material}
-            piel={cambioDePiel}
-            color={
-              indice === undefined || indice === SIN_COLOR
-                ? null
-                : (COLORES_ROPA[indice]?.celda as Celda)
-            }
-          />
-        );
-      })}
-    </group>
+    return todas;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atuendo.piezas, calzadas, tapadosClave]);
+
+  /** La piel, hundida bajo lo que lleve puesto. */
+  const cuerpo = useMemo(
+    () => (piel ? esconder(geometriaBase(piel), puestas, MARGEN_PIEL) : null),
+    [piel, puestas],
   );
+
+  /**
+   * De todas las mallas del archivo se muestra el cuerpo y una prenda por
+   * slot, con su color y su calce. Three.js es mutable por naturaleza:
+   * esto es sincronizar la escena, no guardar estado.
+   */
+  useEffect(() => {
+    const visibles = new Map<string, BufferGeometry>();
+
+    if (cuerpo) {
+      visibles.set(CUERPO, recolorear(cuerpo, cambioDePiel, null));
+    }
+
+    for (const slot of SLOTS) {
+      const elegida = tapados.includes(slot) ? null : atuendo.piezas[slot];
+      const malla = elegida ? buscarMalla(escena, elegida) : null;
+      if (!malla || !elegida) continue;
+
+      const indice = atuendo.colores[slot];
+      const color =
+        indice === undefined || indice === SIN_COLOR
+          ? null
+          : (COLORES_ROPA[indice]?.celda as Celda);
+
+      visibles.set(
+        elegida,
+        recolorear(calzadas.get(slot) ?? geometriaBase(malla), cambioDePiel, color),
+      );
+    }
+
+    // se recorre a pie, sin callbacks, que el compilador no los deja
+    const pendientes: Object3D[] = [escena];
+    while (pendientes.length) {
+      const nodo = pendientes.pop()!;
+      pendientes.push(...nodo.children);
+
+      const malla = nodo as SkinnedMesh;
+      if (!malla.isSkinnedMesh) continue;
+
+      const geometria = visibles.get(malla.name);
+      malla.visible = Boolean(geometria);
+      if (!geometria) continue;
+
+      malla.geometry = geometria;
+      malla.material = material;
+      malla.castShadow = true;
+      malla.receiveShadow = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [escena, cuerpo, calzadas, cambioDePiel, material, atuendo, tapadosClave]);
+
+  return <primitive object={escena} />;
+}
+
+function mallaBase(malla: SkinnedMesh | null) {
+  return malla ? geometriaBase(malla) : null;
+}
+
+/** La geometría con la que vino cada malla, antes de teñirla o calzarla:
+ * si se partiera de la ya modificada, los cambios se irían sumando. */
+const sinTocar = new WeakMap<SkinnedMesh, BufferGeometry>();
+
+function geometriaBase(malla: SkinnedMesh) {
+  let original = sinTocar.get(malla);
+  if (!original) {
+    original = malla.geometry;
+    sinTocar.set(malla, original);
+  }
+  return original;
+}
+
+/** La malla con esqueleto que lleva ese nombre. */
+function buscarMalla(donde: Group, nombre: string) {
+  const nodo = donde.getObjectByName(nombre) as SkinnedMesh | undefined;
+  return nodo?.isSkinnedMesh ? nodo : null;
 }
 
 /**
  * El pack no marca qué prenda tapa a cuál: lo deduce de su tamaño. Un top
  * que llega a la cabeza trae capucha, y uno que llega al suelo trae botas.
  */
-function aQueTapa(top: Mesh | null, cuerpo: Mesh | undefined): Slot[] {
+function aQueTapa(
+  top: SkinnedMesh | null,
+  cuerpo: SkinnedMesh | null,
+): Slot[] {
   if (!top?.geometry || !cuerpo?.geometry) return [];
 
   cuerpo.geometry.computeBoundingBox();
@@ -222,40 +316,6 @@ function aQueTapa(top: Mesh | null, cuerpo: Mesh | undefined): Slot[] {
   }
 
   return tapados;
-}
-
-function Pieza({
-  malla,
-  calzada,
-  material,
-  piel,
-  color,
-}: {
-  malla: Mesh | null | undefined;
-  calzada?: BufferGeometry;
-  material: MeshStandardMaterial;
-  piel: { desde: Celda; hasta: Celda } | null;
-  color?: Celda | null;
-}) {
-  const geometria = useMemo(() => {
-    const base = calzada ?? malla?.geometry;
-    if (!base) return null;
-    return recolorear(base, piel, color ?? null);
-  }, [malla, calzada, piel, color]);
-
-  if (!malla || !geometria) return null;
-
-  return (
-    <mesh
-      geometry={geometria}
-      material={material}
-      position={malla.position}
-      quaternion={malla.quaternion}
-      scale={malla.scale}
-      castShadow
-      receiveShadow
-    />
-  );
 }
 
 /** Deja la malla original intacta: la comparten todas las piezas iguales. */
@@ -300,5 +360,4 @@ function Plataforma() {
   );
 }
 
-SLOTS.forEach((slot) => useGLTF.preload(archivoDe(slot), DRACO));
-useGLTF.preload(CUERPO, DRACO);
+useGLTF.preload(AVATAR, DRACO);

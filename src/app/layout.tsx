@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import { Marco } from "@/components/auth/Marco";
+import { ProveedorPerfil } from "@/components/auth/ProveedorPerfil";
 import { ProveedorSesion } from "@/components/auth/ProveedorSesion";
 import "./globals.css";
 
@@ -20,7 +21,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="es" className={`${nunito.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <ProveedorSesion>
-          <Marco>{children}</Marco>
+          <ProveedorPerfil>
+            <Marco>{children}</Marco>
+          </ProveedorPerfil>
         </ProveedorSesion>
       </body>
     </html>

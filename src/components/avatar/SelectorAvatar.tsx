@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { WebGLRenderer } from "three";
 import { Escena } from "./Escena";
-import { useSesion } from "@/components/auth/ProveedorSesion";
-import { guardarPerfil, leerPerfil } from "@/lib/perfil";
+import { usePerfil } from "@/components/auth/ProveedorPerfil";
+import type { Perfil } from "@/lib/perfil";
 import { COLORES_ROPA, PIELES, UNA_PIEZA, type Color } from "@/lib/paleta";
 import {
-  archivoDe,
+  AVATAR,
   ATUENDO_INICIAL,
   atuendoDe,
   iconoDe,
@@ -24,31 +24,29 @@ const DRACO = "/draco/";
 /** la foto del avatar viaja dentro del perfil, así que va chica */
 const LADO_MINIATURA = 128;
 
-export function SelectorAvatar() {
-  const { usuario } = useSesion();
+export function SelectorAvatar({
+  titulo = "Tu avatar",
+  textoGuardar = "Guardar mi avatar",
+  alGuardar,
+}: {
+  /** el onboarding ya pone su propio título más arriba */
+  titulo?: string | null;
+  textoGuardar?: string;
+  /**
+   * Quién escribe el perfil. El onboarding se mete aquí para dar por
+   * terminada la presentación en la misma escritura que el avatar.
+   */
+  alGuardar?: (cambios: Partial<Perfil>) => Promise<void>;
+} = {}) {
+  const { perfil, guardar: guardarEnPerfil } = usePerfil();
+  const guardarPerfil = alGuardar ?? guardarEnPerfil;
   const renderizador = useRef<WebGLRenderer | null>(null);
 
-  const [atuendo, setAtuendo] = useState<Atuendo>(ATUENDO_INICIAL);
+  // el perfil ya viene leído, así que el atuendo guardado se pone de una
+  const [atuendo, setAtuendo] = useState<Atuendo>(() => atuendoDe(perfil.avatar));
   const [slot, setSlot] = useState<Slot>("Hair");
   const [aviso, setAviso] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
-
-  const uid = usuario?.uid;
-
-  useEffect(() => {
-    if (!uid) return;
-    let vigente = true;
-
-    leerPerfil(uid)
-      .then((perfil) => {
-        if (vigente) setAtuendo(atuendoDe(perfil.avatar));
-      })
-      .catch(() => setAviso("No pudimos leer tu avatar guardado."));
-
-    return () => {
-      vigente = false;
-    };
-  }, [uid]);
 
   function ponerse(pieza: string | null) {
     const piezas = { ...atuendo.piezas, [slot]: pieza };
@@ -74,13 +72,11 @@ export function SelectorAvatar() {
   }
 
   async function guardar() {
-    if (!uid) return;
-
     setGuardando(true);
     setAviso(null);
     try {
       const miniatura = retratar(renderizador.current);
-      await guardarPerfil(uid, {
+      await guardarPerfil({
         avatar: JSON.stringify({ atuendo, miniatura }),
         miniatura,
       });
@@ -94,7 +90,9 @@ export function SelectorAvatar() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-extrabold text-sky-800">Tu avatar</h1>
+      {titulo && (
+        <h1 className="text-3xl font-extrabold text-sky-800">{titulo}</h1>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section className="overflow-hidden rounded-3xl bg-white p-4 shadow-sm">
@@ -165,7 +163,7 @@ export function SelectorAvatar() {
         disabled={guardando}
         className="self-start rounded-full bg-sky-500 px-8 py-4 text-xl font-bold text-white shadow-lg transition hover:bg-sky-600 disabled:opacity-40"
       >
-        {guardando ? "Guardando…" : "Guardar mi avatar"}
+        {guardando ? "Guardando…" : textoGuardar}
       </button>
     </div>
   );
@@ -181,7 +179,7 @@ function Piezas({
   puesta: string | null;
   alElegir: (pieza: string | null) => void;
 }) {
-  const { nodes } = useGLTF(archivoDe(slot), DRACO);
+  const { nodes } = useGLTF(AVATAR, DRACO);
   const piezas = Object.keys(nodes).filter((nombre) =>
     nombre.startsWith(`${slot}_`),
   );

@@ -23,8 +23,10 @@ export const NOMBRE_SLOT: Record<Slot, string> = {
   Shoes: "Zapatos",
 };
 
-export const CUERPO = "/avatar/modelos/cuerpo.glb";
+/** Todo el avatar vive en un archivo: cuerpo, ropa, esqueleto y animación. */
+export const AVATAR = "/avatar/modelos/avatar.glb";
 export const PALETA = "/avatar/modelos/paleta.png";
+export const CUERPO = "Cuerpo";
 
 /** La polera y el pantalón no se pueden sacar: nadie anda desnudo. */
 export const OBLIGATORIOS: Slot[] = ["Top", "Bottom"];
@@ -35,10 +37,6 @@ export const ATUENDO_INICIAL: Atuendo = {
   piel: SIN_COLOR,
   colores: {},
 };
-
-export function archivoDe(slot: Slot) {
-  return `/avatar/modelos/${slot.toLowerCase()}.glb`;
-}
 
 /** El icono se llama igual que la pieza, que por eso no necesita catálogo. */
 export function iconoDe(pieza: string) {

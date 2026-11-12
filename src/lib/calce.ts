@@ -17,6 +17,7 @@ import {
   acceleratedRaycast,
   computeBoundsTree,
   disposeBoundsTree,
+  type MeshBVH,
 } from "three-mesh-bvh";
 
 // sin esto cada rayo recorrería todos los triángulos, y son miles
@@ -79,6 +80,59 @@ const rayo = new Raycaster();
 const desde = new Vector3();
 const hacia = new Vector3();
 const punto = new Vector3();
+const cercano = { point: new Vector3(), distance: 0, faceIndex: 0 };
+
+/**
+ * Mete la piel bajo la ropa. En reposo la prenda queda justo por fuera, pero
+ * las dos superficies tienen pesos distintos y al animarse se deforman cada
+ * una por su lado: entonces la piel asoma por el hombro, por el tobillo o
+ * por la costura. Así que donde hay prenda cerca, la piel se hunde, y se
+ * hunde menos cuanto más lejos esté, para que no se note ningún escalón.
+ */
+export function esconder(
+  cuerpo: BufferGeometry,
+  prendas: BufferGeometry[],
+  margen: number,
+): BufferGeometry {
+  const posicion = cuerpo.getAttribute("position");
+  const normales = cuerpo.getAttribute("normal");
+  if (!prendas.length || !normales) return cuerpo;
+
+  for (const prenda of prendas) {
+    if (!prenda.boundsTree) prenda.computeBoundsTree();
+  }
+
+  const movido = Float32Array.from(posicion.array as Float32Array);
+  let cambio = false;
+
+  for (let i = 0; i < posicion.count; i += 1) {
+    punto.set(movido[i * 3], movido[i * 3 + 1], movido[i * 3 + 2]);
+
+    let cerca = margen;
+    for (const prenda of prendas) {
+      // computeBoundsTree arma un MeshBVH, pero el paquete lo declara con el
+      // tipo del padre, que no sabe buscar el punto más cercano
+      const arbol = prenda.boundsTree as MeshBVH | undefined;
+      const roce = arbol?.closestPointToPoint(punto, cercano, 0, cerca);
+      if (roce) cerca = roce.distance;
+    }
+    if (cerca >= margen) continue;
+
+    const hundir = margen - cerca;
+    movido[i * 3] -= normales.getX(i) * hundir;
+    movido[i * 3 + 1] -= normales.getY(i) * hundir;
+    movido[i * 3 + 2] -= normales.getZ(i) * hundir;
+    cambio = true;
+  }
+
+  if (!cambio) return cuerpo;
+
+  const hundida = cuerpo.clone();
+  hundida.setAttribute("position", new BufferAttribute(movido, 3));
+  hundida.computeVertexNormals();
+
+  return hundida;
+}
 
 export type Calce = {
   /** cuánto se deja respirar a la prenda de afuera */

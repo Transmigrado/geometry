@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarraSesion } from "./BarraSesion";
+import { usePerfil } from "./ProveedorPerfil";
 import { useSesion } from "./ProveedorSesion";
-import { Avatar } from "@/components/avatar/Avatar";
+import { pasoPendiente } from "@/lib/perfil";
 
 /**
- * La cabecera y el pie solo acompañan a quien ya entró: el login ocupa la
- * pantalla completa y trae su propia marca.
+ * La cabecera y el pie solo acompañan a quien ya entró y ya se presentó: el
+ * login y el onboarding ocupan la pantalla completa y traen su propia
+ * marca, para que nadie se escape a mitad de camino.
  */
 export function Marco({ children }: { children: React.ReactNode }) {
   const { usuario } = useSesion();
+  const perfil = usePerfil();
 
-  if (!usuario) return <>{children}</>;
+  if (!usuario || perfil.cargando || pasoPendiente(perfil.perfil)) {
+    return <>{children}</>;
+  }
 
   return (
     <>
@@ -28,10 +33,7 @@ export function Marco({ children }: { children: React.ReactNode }) {
             <Modulo href="/ecuaciones" nombre="Ecuaciones" />
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Avatar />
-            <BarraSesion />
-          </div>
+          <BarraSesion />
         </div>
       </header>
 

@@ -10,6 +10,33 @@ calcularlas. Tiene dos módulos:
 Cada usuario tiene además su **avatar en 3D**, que se arma en el navegador
 con Three.js: ver [AVATAR.md](AVATAR.md).
 
+La primera vez se pasa por un **onboarding** de tres preguntas —el nombre y
+el apellido, la fecha de nacimiento y el avatar— y hasta terminarlo no se ve
+el resto de la app.
+
+Quién lo ve lo decide `Protegido`, que envuelve las tres páginas: sin sesión
+va al login, con el perfil sin terminar va al onboarding, y recién después se
+juega. El paso que falta sale de mirar qué campos del perfil están vacíos, no
+de un contador aparte; así cada respuesta se guarda apenas se contesta y
+cerrar la pestaña a mitad de camino no pierde nada.
+
+El perfil queda marcado como presentado (`onboarded`) en cuanto no queda
+nada que preguntar, sea en el último paso o en uno anterior —que es lo que
+pasa cuando a un perfil de antes sólo le falta un campo recién agregado—. Y
+**eso manda sobre los campos**: quien ya se presentó no vuelve a pasar por
+aquí aunque después borre un dato, o aunque mañana el onboarding pregunte
+algo más.
+
+Después, esos datos se ven en **`/perfil`**, junto al avatar y al botón para
+cambiarlo. Ahí vive también el botón de cerrar sesión: en la cabecera se
+tropezaba con él sin querer, y cerrar la sesión a medio problema no se lo
+deseamos a nadie. La cabecera sólo lleva al perfil.
+
+En Firestore los campos van en inglés, por convención: `name`, `lastName`,
+`birthdate`, `avatar`, `thumbnail`, `onboarded` y `updatedAt`. Dentro de la
+app el perfil habla español como todo lo demás, y la traducción vive sólo en
+`src/lib/perfil.ts`.
+
 ## Geometría
 
 Dado un **cuerpo A** y un **cuerpo B**, ¿cuánta superficie o cuánto volumen

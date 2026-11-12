@@ -4,7 +4,8 @@ El selector corre en HTML con Three.js: una plataforma, el personaje y las
 piezas de ropa que se eligen por slot. No hay motor de juego de por medio.
 
 El contenido sale de **Cozy Citizens** (PixeliusVita), un pack de Unity. De
-ahí se extraen el cuerpo y las 244 piezas a archivos GLB.
+ahí se extraen el cuerpo, las 214 piezas de ropa y la animación de reposo a
+un único GLB de 3 MB.
 
 ## Preparar los archivos
 
@@ -17,7 +18,7 @@ Blender instalado:
   "<ruta>/Assets/CozyKit2026/HumanModular" public/avatar/modelos
 ```
 
-Eso deja `cuerpo.glb` y un GLB por slot. Después, a mano:
+Eso deja `avatar.glb`. Después, a mano:
 
 ```bash
 # la paleta de colores, que comparten todas las piezas
@@ -32,15 +33,36 @@ mkdir -p public/draco && cp node_modules/three/examples/jsm/libs/draco/gltf/* pu
 
 ## Cómo está armado
 
-**Las piezas se exportan sin esqueleto**, en su pose de reposo. El personaje
-está quieto en una plataforma, así que el rig no hace falta y su ausencia
-quita de encima todo el riesgo de animación.
+**Todo vive en un archivo**: el cuerpo, las 214 prendas, un solo esqueleto y
+la animación de reposo. Repartirlo por slot obligaría a cada archivo a traer
+su propio esqueleto, y entonces la ropa se deformaría respecto del cuerpo.
+Como las prendas que no se llevan puestas quedan invisibles, nunca llegan a
+la tarjeta gráfica.
+
+**El personaje respira**, no se queda en cruz: la animación `Idle01` del pack
+se pega al esqueleto y la mueve un `AnimationMixer`. Tres trampas al
+extraerla, las tres silenciosas:
+
+- Desde Blender 4.4 las acciones van por ranuras: hay que elegir una
+  (`animation_data.action_slot`) o la acción queda asignada pero inerte, ni
+  se mueve ni se exporta.
+- **No hay que poner el rig en `REST`** para exportar. Parece prudente —las
+  matrices de enlace saldrían de la pose de descanso— pero el exportador
+  muestrea la pose evaluada fotograma a fotograma: con el rig en reposo
+  escribe los 192 canales con el mismo valor en todos. La animación sale,
+  pesa, y no mueve nada.
+- **glTF descarta la matriz de las mallas con esqueleto** (lo dice la
+  especificación). Cada FBX del pack viene en su marco —el cuerpo a 0,01 y
+  el vestuario a 1—, así que al juntarlos la prenda pierde justo la matriz
+  que la ponía en su sitio y se desploma a los pies. Por eso `colgar_de`
+  hornea la diferencia en los vértices y deja la prenda con la misma matriz
+  que el cuerpo: así no hay nada que perder.
 
 **Todas comparten un material**: una textura paleta de 2048×2048 donde cada
 celda es un color. El filtro va en `NearestFilter` a propósito, porque si
 interpola, los colores se mezclan en los bordes de cada celda.
 
-**No hay catálogo de piezas.** La lista sale de los propios GLB: cada nodo se
+**No hay catálogo de piezas.** La lista sale del propio GLB: cada nodo se
 llama `Top_GamerCitizen_20`, igual que su icono, así que el modelo y su
 imagen se enlazan solos.
 
@@ -86,6 +108,14 @@ gorro, sin cruzarse.
 Buscar el punto del cuerpo del que nace cada vértice es lo caro, pero no
 cambia nunca y se guarda. Los rayos van por BVH (`three-mesh-bvh`), porque
 sin él cada uno recorrería miles de triángulos.
+
+**Y la piel se hunde bajo la ropa.** En reposo cada prenda queda justo por
+fuera, pero la piel y la tela tienen pesos de esqueleto distintos: al
+animarse se deforman cada una por su lado y la piel asoma por el hombro, por
+el tobillo o por la costura. Así que donde hay prenda a menos de 12 mm, la
+piel se mete hacia adentro —y se mete menos cuanto más lejos está la prenda,
+para que no quede ningún escalón a la vista—. Es la misma idea del calce,
+pero con el cuerpo como la capa de más adentro.
 
 ## Las reglas entre prendas
 
