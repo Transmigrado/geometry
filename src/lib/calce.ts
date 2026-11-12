@@ -8,6 +8,7 @@
 import {
   BufferAttribute,
   BufferGeometry,
+  DoubleSide,
   Mesh,
   MeshBasicMaterial,
   Raycaster,
@@ -156,7 +157,10 @@ export function calzar(
   const origen = interior.getAttribute("position");
   if (!exterior.boundsTree) exterior.computeBoundsTree();
 
-  const barrera = new Mesh(exterior, new MeshBasicMaterial());
+  // a dos caras, y no es un detalle: el rayo sale de dentro del cuerpo, así
+  // que choca con la cara interior de la prenda. Mirando sólo las de frente,
+  // ese choque no existe y no se calzaba nada
+  const barrera = new Mesh(exterior, new MeshBasicMaterial({ side: DoubleSide }));
   rayo.firstHitOnly = true;
 
   const movido = Float32Array.from(origen.array as Float32Array);
