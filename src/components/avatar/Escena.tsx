@@ -96,14 +96,18 @@ type Props = {
   atuendo: Atuendo;
   /** para poder sacarle la foto al personaje */
   alCrear?: (renderizador: WebGLRenderer) => void;
+  /** qué animación tocar; por defecto, el reposo de siempre */
+  animacion?: string;
+  /** cuánto alejar la cámara de su posición normal; 1 = la de siempre */
+  zoom?: number;
 };
 
-export function Escena({ atuendo, alCrear }: Props) {
+export function Escena({ atuendo, alCrear, animacion, zoom = 1 }: Props) {
   return (
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 0.95, 3.7], fov: 32 }}
+      camera={{ position: [0, 0.95, 3.7 * zoom], fov: 32 }}
       // sin esto la miniatura sale en negro
       gl={{ preserveDrawingBuffer: true }}
       onCreated={({ gl }) => alCrear?.(gl)}
@@ -119,7 +123,7 @@ export function Escena({ atuendo, alCrear }: Props) {
       />
       <directionalLight position={[-3, 2, -2]} intensity={0.6} />
 
-      <Personaje atuendo={atuendo} />
+      <Personaje atuendo={atuendo} animacion={animacion} />
       <Plataforma />
 
       <OrbitControls
@@ -134,7 +138,7 @@ export function Escena({ atuendo, alCrear }: Props) {
   );
 }
 
-function Personaje({ atuendo }: { atuendo: Atuendo }) {
+function Personaje({ atuendo, animacion }: { atuendo: Atuendo; animacion?: string }) {
   const paleta = useTexture(PALETA);
   const avatar = useGLTF(AVATAR, DRACO);
 
@@ -165,22 +169,26 @@ function Personaje({ atuendo }: { atuendo: Atuendo }) {
    * esqueleto, así que la ropa se mueve con el cuerpo sin más. */
   const escena = useMemo(() => clone(avatar.scene) as Group, [avatar.scene]);
 
-  /** El personaje respira en vez de quedarse en cruz. */
+  /** El personaje respira en vez de quedarse en cruz, salvo que se le pida
+   * otra cosa (por ejemplo, para celebrar). El índice no sirve de nombre:
+   * el archivo trae más de una animación y no garantiza su orden. */
   const bailarin = useRef<AnimationMixer | null>(null);
-  const reposo = avatar.animations[0];
+  const clip =
+    avatar.animations.find((cual) => cual.name === (animacion ?? "Reposo")) ??
+    avatar.animations[0];
 
   useEffect(() => {
-    if (!reposo) return;
+    if (!clip) return;
 
     const mezclador = new AnimationMixer(escena);
-    mezclador.clipAction(reposo).play();
+    mezclador.clipAction(clip).play();
     bailarin.current = mezclador;
 
     return () => {
       mezclador.stopAllAction();
       bailarin.current = null;
     };
-  }, [escena, reposo]);
+  }, [escena, clip]);
 
   useFrame((_, paso) => bailarin.current?.update(paso));
 

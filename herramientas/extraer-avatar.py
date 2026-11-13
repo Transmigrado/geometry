@@ -2,9 +2,9 @@
 Saca del pack de Unity el cuerpo y las piezas de ropa y las deja como GLB.
 
 Sale un único avatar.glb con el cuerpo, las 214 piezas de ropa, un solo
-esqueleto y la animación de reposo. Va todo junto a propósito: repartirlo en
-varios archivos obliga a cada uno a traer su propio esqueleto, y entonces la
-ropa se deforma respecto del cuerpo.
+esqueleto y dos animaciones: reposo y celebrar. Va todo junto a propósito:
+repartirlo en varios archivos obliga a cada uno a traer su propio esqueleto,
+y entonces la ropa se deforma respecto del cuerpo.
 """
 
 import os
@@ -25,6 +25,7 @@ ICONOS = os.path.join(ORIGEN, "Wardrobe", "Icons")
 BASICO = os.path.join(ORIGEN, "Wardrobe", "Basic", "BasicOutfit.fbx")
 
 REPOSO = os.path.join(ORIGEN, "Animation", "Idle01.fbx")
+CELEBRACION = os.path.join(ORIGEN, "Animation", "Emote02_Sparkle.fbx")
 
 def del_vestuario(nombre):
     return os.path.exists(os.path.join(ICONOS, f"{nombre}.png"))
@@ -118,6 +119,25 @@ if portador and portador.animation_data and portador.animation_data.action:
     inicio, fin = reposo.frame_range
     bpy.context.scene.frame_start = int(inicio)
     bpy.context.scene.frame_end = int(fin)
+if portador:
+    bpy.data.objects.remove(portador, do_unlink=True)
+
+# 2b. la de celebrar, aparte: el esqueleto sólo deja una acción activa a la
+# vez, así que el reposo se manda a una pista NLA y la de celebrar queda de
+# activa. El exportador, en modo ACTIONS, saca una animación por cada una.
+pista = rig.animation_data.nla_tracks.new()
+pista.strips.new("Reposo", int(reposo.frame_range[0]), reposo)
+rig.animation_data.action = None
+
+_, portador = importar(CELEBRACION)
+if portador and portador.animation_data and portador.animation_data.action:
+    celebracion = portador.animation_data.action
+    print("CURVAS enganchadas:", enganchadas(celebracion, rig), "de", len(celebracion.fcurves))
+    rig.animation_data.action = celebracion
+    if hasattr(rig.animation_data, "action_slot") and celebracion.slots:
+        rig.animation_data.action_slot = celebracion.slots[0]
+    celebracion.name = "Celebracion"
+    celebracion.use_fake_user = True
 if portador:
     bpy.data.objects.remove(portador, do_unlink=True)
 

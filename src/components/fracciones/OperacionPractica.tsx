@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Figura } from "./Figura";
 import { AyudaOperacion } from "./AyudaOperacion";
+import { ModalCelebracion } from "@/components/avatar/ModalCelebracion";
 import {
   comoTexto,
   cuantoSuman,
@@ -25,6 +26,7 @@ export function OperacionPractica({ operacion }: { operacion: Operacion }) {
   const [juzgado, setJuzgado] = useState<boolean | null>(null);
   const [resueltos, setResueltos] = useState(0);
   const [mostrarAyuda, setMostrarAyuda] = useState(false);
+  const [celebrando, setCelebrando] = useState(false);
   const [reloj] = useState(cronometro);
 
   const { figura, primera, segunda, objetivo } = ejercicio;
@@ -47,7 +49,11 @@ export function OperacionPractica({ operacion }: { operacion: Operacion }) {
     if (acertada || elegidas.length === 0) return;
     const bien = iguales(sumaElegida, objetivo);
     setJuzgado(bien);
-    if (bien) setResueltos((actual) => actual + 1);
+    if (bien) {
+      const total = resueltos + 1;
+      setResueltos(total);
+      if (total % 5 === 0) setCelebrando(true);
+    }
 
     void registrar({
       modulo: "fractions",
@@ -194,6 +200,13 @@ export function OperacionPractica({ operacion }: { operacion: Operacion }) {
         </button>
         {mostrarAyuda && <AyudaOperacion ejercicio={ejercicio} />}
       </div>
+
+      {celebrando && (
+        <ModalCelebracion
+          racha={resueltos}
+          onContinuar={() => setCelebrando(false)}
+        />
+      )}
     </div>
   );
 }

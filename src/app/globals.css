@@ -29,3 +29,26 @@ body {
   font-family: var(--font-nunito), system-ui, sans-serif;
 }
 
+/* el giro final de cada pieza llega por variable, para que todas caigan
+   con el mismo vaivén sin repetir la regla una vez por pieza */
+@keyframes confeti-caer {
+  0% {
+    top: -10%;
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    top: 110%;
+    transform: rotate(var(--giro));
+    opacity: 0.9;
+  }
+}
+
+.confeti-pieza {
+  position: absolute;
+  top: -10%;
+  animation-name: confeti-caer;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+

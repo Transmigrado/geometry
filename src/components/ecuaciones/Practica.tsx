@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Balanza } from "./Balanza";
+import { ModalCelebracion } from "@/components/avatar/ModalCelebracion";
 import { nuevoEjercicio, PRIMER_EJERCICIO } from "@/lib/ecuaciones";
 import { cronometro, errorDe, registrar, TEMAS } from "@/lib/metricas";
 
@@ -10,6 +11,7 @@ export function Practica() {
   const [elegida, setElegida] = useState<number | null>(null);
   const [resueltos, setResueltos] = useState(0);
   const [noGuardada, setNoGuardada] = useState(false);
+  const [celebrando, setCelebrando] = useState(false);
 
   const { fruta, cantidad, peso, extra, total, opciones } = ejercicio;
   const acertada = elegida === null ? null : elegida === peso;
@@ -24,7 +26,11 @@ export function Practica() {
     if (acertada) return;
     setElegida(opcion);
     setNoGuardada(false);
-    if (opcion === peso) setResueltos(resueltos + 1);
+    if (opcion === peso) {
+      const total = resueltos + 1;
+      setResueltos(total);
+      if (total % 5 === 0) setCelebrando(true);
+    }
 
     void registrar({
       modulo: "equations",
@@ -129,6 +135,13 @@ export function Practica() {
       >
         {acertada ? "Otra pesa ✨" : "Saltar esta"}
       </button>
+
+      {celebrando && (
+        <ModalCelebracion
+          racha={resueltos}
+          onContinuar={() => setCelebrando(false)}
+        />
+      )}
     </div>
   );
 }
