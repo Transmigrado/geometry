@@ -101,6 +101,27 @@ service cloud.firestore {
       return r in ['student', 'teacher', 'school', 'parent'];
     }
 
+    /**
+     * Las monedas se mueven de dos maneras nada más: +2 al celebrar una
+     * racha, -20 al comprar una lámina. Comprar es lo único que toca
+     * `collectedCards` a la vez, así que con eso basta para distinguir una
+     * del otro sin necesitar saber qué lámina es ni leer otro documento.
+     *
+     * Lo que esto NO prueba es que la lámina que se agregó sea real ni que
+     * haya una sola: el cliente arma el mapa entero y lo manda de nuevo.
+     * Igual que el acierto de un intento, es un dato que hoy se confía
+     * porque no hay servidor en medio de cada compra.
+     */
+    function cambioDeMonedasValido() {
+      let antes = resource.data.get('coins', 0);
+      let despues = request.resource.data.coins;
+      let compro = request.resource.data.get('collectedCards', {})
+                   != resource.data.get('collectedCards', {});
+
+      return despues >= 0
+        && (compro ? despues == antes - 20 : despues == antes + 2);
+    }
+
     match /users/{uid} {
       allow get: if mio(uid) || esApoderadoDe(uid);
 
@@ -134,8 +155,12 @@ service cloud.firestore {
        */
       allow update: if mio(uid)
         && request.resource.data.diff(resource.data)
-             .affectedKeys().hasOnly(camposPropios().concat(['role']))
-        && rolValido(request.resource.data.role);
+             .affectedKeys()
+             .hasOnly(camposPropios().concat(['role', 'coins', 'collectedCards']))
+        && rolValido(request.resource.data.role)
+        && (!request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['coins', 'collectedCards'])
+            || cambioDeMonedasValido());
 
       // borrar arrastra métricas de un curso entero: va por callable
       allow delete: if false;
@@ -327,6 +352,19 @@ service cloud.firestore {
       allow get, list: if esElAlumnoOSuApoderado(resource.data.studentId)
                        || (resource.data.courseId != null
                            && esProfesorDe(resource.data.courseId));
+      allow write: if false;
+    }
+
+    // ───────────────────────── cards ─────────────────────────
+    /**
+     * El catálogo de láminas: quién sale en cada colección y dónde está su
+     * imagen. No es un dato de nadie en particular —es el mismo para
+     * todos—, así que cualquiera que entró lo puede leer. Lo escribe sólo
+     * quien suba contenido nuevo, a mano con el Admin SDK: todavía no hay
+     * panel para eso.
+     */
+    match /cards/{id} {
+      allow get, list: if entro();
       allow write: if false;
     }
 

@@ -33,6 +33,10 @@ export type Perfil = {
   rol: Rol;
   /** el colegio al que pertenece, si lo hay. Lo escribe sólo el servidor. */
   colegio: string | null;
+  /** lo que lleva ganado celebrando rachas, y lo que cuesta cada lámina */
+  monedas: number;
+  /** cuántas veces le tocó cada lámina, por id de carta */
+  cartas: Record<string, number>;
 };
 
 export const ROLES = ["student", "teacher", "school", "parent"] as const;
@@ -54,6 +58,8 @@ const CAMPO: Record<keyof Perfil, string> = {
   listo: "onboarded",
   rol: "role",
   colegio: "schoolId",
+  monedas: "coins",
+  cartas: "collectedCards",
 };
 
 export const PERFIL_VACIO: Perfil = {
@@ -66,6 +72,8 @@ export const PERFIL_VACIO: Perfil = {
   miniatura: null,
   foto: null,
   listo: false,
+  monedas: 0,
+  cartas: {},
 };
 
 export type Paso = "perfil" | "nombre" | "nacimiento" | "avatar";
@@ -166,6 +174,8 @@ export async function leerPerfil(uid: string): Promise<Perfil> {
   };
 
   const rol = datos[CAMPO.rol];
+  const monedas = datos[CAMPO.monedas];
+  const cartas = datos[CAMPO.cartas];
 
   return {
     nombre: texto("nombre"),
@@ -177,6 +187,8 @@ export async function leerPerfil(uid: string): Promise<Perfil> {
     listo: datos[CAMPO.listo] === true,
     rol: ROLES.includes(rol) ? rol : "student",
     colegio: texto("colegio"),
+    monedas: typeof monedas === "number" ? monedas : 0,
+    cartas: cartas && typeof cartas === "object" ? cartas : {},
   };
 }
 

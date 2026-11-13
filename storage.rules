@@ -27,6 +27,16 @@ service firebase.storage {
         && request.resource.contentType.matches('image/(png|jpeg|webp)');
     }
 
+    /**
+     * Las láminas del álbum. El mismo contenido para todos, así que lo lee
+     * cualquiera que entró; la escritura es del Admin SDK, a mano, hasta
+     * que exista un panel para subir colecciones nuevas.
+     */
+    match /cards/{collectionId}/{archivo} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     match /{todo=**} {
       allow read, write: if false;
     }

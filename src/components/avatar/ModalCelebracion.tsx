@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Confeti } from "./Confeti";
 import { Escena } from "./Escena";
 import { Frontera } from "./Frontera";
@@ -11,7 +11,14 @@ import { atuendoDe } from "@/lib/vestuario";
  * tan chico, así que esta se para un poco más lejos */
 const ZOOM = 1.3;
 
+/** fondo de fiesta, sin el pedestal: aquí no hay que elegir ropa, sólo
+ * verlo celebrar */
+const FONDO = "#bbf7d0";
+
 const SONIDO = "/sonidos/celebracion.mp3";
+
+/** lo que se gana cada vez que aparece esta fiesta */
+const MONEDAS_POR_RACHA = 2;
 
 /**
  * Cada cinco respuestas correctas, el propio muñeco del niño celebra. No es
@@ -25,14 +32,26 @@ export function ModalCelebracion({
   racha: number;
   onContinuar: () => void;
 }) {
-  const { perfil } = usePerfil();
+  const { perfil, guardar } = usePerfil();
   const atuendo = atuendoDe(perfil.avatar);
+  const otorgadas = useRef(false);
 
   useEffect(() => {
     const audio = new Audio(SONIDO);
     // si el archivo todavía no existe, o el navegador bloquea el sonido,
     // que la fiesta siga en silencio antes que romper el modal
     audio.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    // la referencia evita pagar dos veces si React vuelve a montar el
+    // efecto en desarrollo; en producción monta una sola vez de todos modos
+    if (otorgadas.current) return;
+    otorgadas.current = true;
+
+    guardar({ monedas: perfil.monedas + MONEDAS_POR_RACHA }).catch(() => {});
+    // sólo al abrirse: no hay que repetir el pago si el perfil cambia
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -47,7 +66,13 @@ export function ModalCelebracion({
         <div className="h-64 w-full overflow-hidden rounded-2xl bg-sky-50">
           <Frontera aviso="🎉">
             <Suspense fallback={null}>
-              <Escena atuendo={atuendo} animacion="Celebracion" zoom={ZOOM} />
+              <Escena
+                atuendo={atuendo}
+                animacion="Celebracion"
+                zoom={ZOOM}
+                plataforma={false}
+                fondo={FONDO}
+              />
             </Suspense>
           </Frontera>
         </div>

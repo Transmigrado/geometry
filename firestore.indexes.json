@@ -197,6 +197,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "cards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "collectionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "order",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -208,6 +222,11 @@
     {
       "collectionGroup": "users",
       "fieldPath": "thumbnail",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "users",
+      "fieldPath": "collectedCards",
       "indexes": []
     }
   ]

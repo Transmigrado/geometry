@@ -51,7 +51,7 @@ await entorno.withSecurityRulesDisabled(async (admin) => {
 
   await setDoc(doc(base, "users", NINO), {
     name: "Ana", lastName: "Pérez", birthdate: "2015-03-12",
-    role: "student", onboarded: true,
+    role: "student", onboarded: true, coins: 20,
   });
 
   await setDoc(doc(base, "schools", COLEGIO), { name: "Colegio Uno" });
@@ -104,6 +104,11 @@ await entorno.withSecurityRulesDisabled(async (admin) => {
     attempts: 6, correct: 4,
     byChallenge: { "fractions.mixed": { a: 6, c: 4 } },
   });
+
+  await setDoc(doc(base, "cards", "euler"), {
+    name: "Leonhard Euler", collectionId: "mathematicians",
+    imageUrl: "https://ejemplo.test/euler.webp", order: 0,
+  });
 });
 
 const como = (uid, extra) => entorno.authenticatedContext(uid, extra).firestore();
@@ -151,6 +156,26 @@ await caso("ni se cuelga de un colegio", () =>
   assertFails(updateDoc(doc(nino, "users", NINO), { schoolId: COLEGIO })));
 await caso("pero sí cambia su nombre", () =>
   assertSucceeds(updateDoc(doc(nino, "users", NINO), { name: "Anita" })));
+
+console.log("\nLas monedas sólo se mueven de dos maneras");
+await caso("no se puede asignar un número cualquiera", () =>
+  assertFails(updateDoc(doc(nino, "users", NINO), { coins: 9999 })));
+await caso("no se puede quedar en negativo", () =>
+  assertFails(updateDoc(doc(nino, "users", NINO), { coins: -5 })));
+await caso("no se regala una lámina sin pagarla", () =>
+  assertFails(updateDoc(doc(nino, "users", NINO), {
+    collectedCards: { euler: 1 },
+  })));
+await caso("no vale cobrar de más por la lámina", () =>
+  assertFails(updateDoc(doc(nino, "users", NINO), {
+    coins: 10, collectedCards: { euler: 1 },
+  })));
+await caso("celebrar una racha da 2 monedas", () =>
+  assertSucceeds(updateDoc(doc(nino, "users", NINO), { coins: 22 })));
+await caso("comprar una lámina cuesta 20 y la suma al mapa", () =>
+  assertSucceeds(updateDoc(doc(nino, "users", NINO), {
+    coins: 2, collectedCards: { euler: 1 },
+  })));
 
 console.log("\nEl código de matrícula no se filtra");
 await caso("el alumno matriculado NO lee el código de su curso", () =>
@@ -268,6 +293,19 @@ await caso("el niño no se matricula solo", () =>
 await caso("nadie se adjudica un menor", () =>
   assertFails(setDoc(doc(intruso, "guardianships", `${INTRUSO}_${NINO}`), {
     parentId: INTRUSO, studentId: NINO, status: "active",
+  })));
+
+console.log("\nEl álbum de láminas lo lee cualquiera que entró");
+await caso("un alumno lo lee", () =>
+  assertSucceeds(getDoc(doc(nino, "cards", "euler"))));
+await caso("un profesor también", () =>
+  assertSucceeds(getDoc(doc(profe, "cards", "euler"))));
+await caso("quien no entró, no", () =>
+  assertFails(getDoc(doc(nadie, "cards", "euler"))));
+await caso("nadie lo escribe desde el cliente", () =>
+  assertFails(setDoc(doc(nino, "cards", "newton"), {
+    name: "Isaac Newton", collectionId: "mathematicians",
+    imageUrl: "https://ejemplo.test/newton.webp", order: 1,
   })));
 
 await entorno.cleanup();

@@ -100,9 +100,20 @@ type Props = {
   animacion?: string;
   /** cuánto alejar la cámara de su posición normal; 1 = la de siempre */
   zoom?: number;
+  /** si se ve el pedestal bajo los pies; por defecto sí */
+  plataforma?: boolean;
+  /** el color de fondo; por defecto, el celeste de siempre */
+  fondo?: string;
 };
 
-export function Escena({ atuendo, alCrear, animacion, zoom = 1 }: Props) {
+export function Escena({
+  atuendo,
+  alCrear,
+  animacion,
+  zoom = 1,
+  plataforma = true,
+  fondo = "#e0f2fe",
+}: Props) {
   return (
     <Canvas
       shadows
@@ -112,7 +123,7 @@ export function Escena({ atuendo, alCrear, animacion, zoom = 1 }: Props) {
       gl={{ preserveDrawingBuffer: true }}
       onCreated={({ gl }) => alCrear?.(gl)}
     >
-      <color attach="background" args={["#e0f2fe"]} />
+      <color attach="background" args={[fondo]} />
 
       <ambientLight intensity={1.4} />
       <directionalLight
@@ -124,7 +135,7 @@ export function Escena({ atuendo, alCrear, animacion, zoom = 1 }: Props) {
       <directionalLight position={[-3, 2, -2]} intensity={0.6} />
 
       <Personaje atuendo={atuendo} animacion={animacion} />
-      <Plataforma />
+      {plataforma && <Plataforma />}
 
       <OrbitControls
         target={[0, 0.78, 0]}

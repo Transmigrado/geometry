@@ -86,8 +86,8 @@ export function leToca(rol: Rol, ruta: string) {
   // el muñeco 3D es cosa de niños; los adultos suben una foto y ya
   if (ruta === "/avatar") return rol === "student";
   if (rol === "student") {
-    return ["/", "/geometria", "/ecuaciones", "/fracciones"].includes(ruta)
-      || ruta.startsWith("/fracciones/");
+    return ["/", "/geometria", "/ecuaciones", "/fracciones", "/albumes", "/estadisticas"]
+      .includes(ruta) || ruta.startsWith("/fracciones/");
   }
 
   // con los colegios apagados nadie es otra cosa que alumno, así que sus
