@@ -114,7 +114,7 @@ function Celebracion({
 
         <div className="h-64 w-full overflow-hidden rounded-2xl bg-sky-50">
           <Frontera aviso="🎉">
-            <Suspense fallback={null}>
+            <Suspense fallback={<CargandoAvatar />}>
               <Escena
                 atuendo={atuendo}
                 animacion="Celebracion"
@@ -135,5 +135,18 @@ function Celebracion({
         </button>
       </ModalContent>
     </ModalBody>
+  );
+}
+
+/** Sólo se ve si alguien llega a la racha antes de que termine de precargar
+ * el modelo y la paleta —raro, porque eso arranca apenas se entra al
+ * juego—, así que un gesto simple basta. */
+function CargandoAvatar() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <span className="animate-bounce text-4xl" aria-hidden>
+        🎉
+      </span>
+    </div>
   );
 }

@@ -431,3 +431,7 @@ function Plataforma() {
 }
 
 useGLTF.preload(AVATAR, DRACO);
+// sin esto, el modal de celebración se queda en blanco los primeros
+// segundos: el modelo llega precargado pero la paleta de colores no, y
+// Personaje() no puede pintar nada hasta tener las dos cosas
+useTexture.preload(PALETA);
