@@ -5,6 +5,7 @@ import { Contador } from "./Contador";
 import { IconoProblema } from "./IconoProblema";
 import { MedidaDeVolumen } from "./MedidaDeVolumen";
 import { Resultado } from "./Resultado";
+import { Opcion } from "@/components/ui/Opcion";
 import {
   CATALOGO,
   campos,
@@ -283,42 +284,6 @@ function Pregunta({
       <h1 className="text-3xl font-extrabold text-sky-800">{titulo}</h1>
       {children}
     </section>
-  );
-}
-
-function Opcion({
-  emoji,
-  dibujo,
-  titulo,
-  descripcion,
-  onClick,
-  color = "bg-sky-500",
-}: {
-  emoji?: string;
-  dibujo?: React.ReactNode;
-  titulo: string;
-  descripcion: string;
-  onClick: () => void;
-  color?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-full w-full items-center gap-4 rounded-3xl bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-    >
-      <span
-        className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-3xl ${
-          dibujo ? "bg-slate-100" : color
-        }`}
-      >
-        {dibujo ?? emoji}
-      </span>
-      <span>
-        <span className="block text-xl font-bold text-slate-800">{titulo}</span>
-        <span className="block text-slate-600">{descripcion}</span>
-      </span>
-    </button>
   );
 }
 
