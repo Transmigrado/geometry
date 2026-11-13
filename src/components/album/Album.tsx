@@ -80,7 +80,7 @@ export function Album() {
         >
           {comprando
             ? "Comprando…"
-            : `🪙 Comprar lámina (${PRECIO_CARTA})`}
+            : `Comprar lámina (${PRECIO_CARTA})`}
         </button>
       </header>
 
