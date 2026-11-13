@@ -160,7 +160,7 @@ export function MisAlumnos({ cursos }: { cursos: Curso[] }) {
                   {mirando && (
                     <TableRow className="bg-sky-50">
                       <TableCell colSpan={4}>
-                        <ComoVa progreso={alumno.progreso} quien={nombre} />
+                        <ComoVa progreso={alumno.progreso} quien={nombre} alumno={alumno.id} />
                       </TableCell>
                     </TableRow>
                   )}

@@ -3,6 +3,7 @@
 import { Badge, Progress as Barra } from "flowbite-react";
 import { NOMBRE_TEMA, type Tema } from "@/lib/metricas";
 import type { Progreso } from "@/lib/colegio";
+import { PorDia } from "./PorDia";
 import { Vacio } from "./piezas";
 
 /**
@@ -54,10 +55,13 @@ function temasDe(progreso: Progreso[]) {
 export function ComoVa({
   progreso,
   quien,
+  alumno,
 }: {
   progreso: Progreso[];
   /** cómo llamarle cuando no hay nada que enseñar */
   quien: string;
+  /** de quién es, para poder traer su día a día */
+  alumno?: string;
 }) {
   const temas = temasDe(progreso);
   const intentos = temas.reduce((suma, fila) => suma + fila.intentos, 0);
@@ -89,6 +93,15 @@ export function ComoVa({
           }
         />
       </div>
+
+      {alumno && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            Día a día
+          </span>
+          <PorDia alumno={alumno} />
+        </div>
+      )}
 
       <ul className="flex flex-col gap-3">
         {temas.map((fila) => {

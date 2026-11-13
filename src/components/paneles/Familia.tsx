@@ -62,7 +62,11 @@ function Hijo({ hijo }: { hijo: Alumno }) {
       {!progreso ? (
         <Cargando />
       ) : (
-        <ComoVa progreso={progreso} quien={hijo.nombre || "Tu hijo"} />
+        <ComoVa
+          progreso={progreso}
+          quien={hijo.nombre || "Tu hijo"}
+          alumno={hijo.id}
+        />
       )}
     </Tarjeta>
   );

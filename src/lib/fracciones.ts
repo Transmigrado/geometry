@@ -138,8 +138,9 @@ function fraccionPropia(denominador: number): Fraccion {
 /** Una partición visual de partes iguales, usada por los tres juegos. */
 export function partirFigura(figura: Figura, cuantas: number): Pieza[] {
   const total = Math.max(1, Math.min(12, Math.floor(cuantas)));
-  const reparto = figura === "circulo"
-    ? total === 1
+  let reparto: Reparto;
+  if (figura === "circulo") {
+    reparto = total === 1
       ? {
           figura,
           piezas: [
@@ -150,8 +151,57 @@ export function partirFigura(figura: Figura, cuantas: number): Pieza[] {
             ),
           ],
         }
-      : porciones(total)
-    : franjas(total, false);
+      : porciones(total);
+  } else if (figura === "triangulo") {
+    if (total === 1) {
+      reparto = {
+        figura,
+        piezas: [pieza(poligono([PICO, PIE_IZQ, PIE_DER]), 1, 1)],
+      };
+    } else if (total === 2) reparto = dosTriangulos();
+    else if (total === 3) reparto = tresTriangulos();
+    else if (total === 4) reparto = cuatroTriangulos();
+    else if (total === 8) reparto = ochoTriangulos();
+    else if (total === 6 || total === 9 || total === 12) {
+      reparto = triangulosEnTresPartes(total / 3);
+    } else {
+      reparto = franjas(total, false);
+    }
+  } else {
+    reparto = franjas(total, false);
+  }
+
+  return reparto.piezas.map((suya, i) => ({ ...suya, id: `p${i}` }));
+}
+
+/**
+ * La figura del apoyo subdividida en unidades del tamaño de la pieza menor,
+ * conservando el patrón del ejercicio original.
+ */
+export function unidadesDeEjercicio(ejercicio: Ejercicio): Pieza[] {
+  const denominadorMenor = Math.max(
+    ...ejercicio.piezas.map((pieza) => pieza.valor.denominador),
+  );
+  const mismaDivision = ejercicio.piezas.every(
+    (pieza) => pieza.valor.denominador === denominadorMenor,
+  );
+  if (mismaDivision) return ejercicio.piezas;
+
+  let reparto: Reparto;
+  if (ejercicio.figura === "cuadrado") {
+    // Rejilla 2×2 con la última celda partida: al convertir cada celda en
+    // dos unidades iguales, queda una rejilla de dos filas y cuatro columnas.
+    if (denominadorMenor === 8 && ejercicio.piezas.length === 5) {
+      reparto = rejilla(2, 4);
+    } else {
+      // Franjas verticales, con la última dividida arriba y abajo.
+      reparto = rejilla(2, denominadorMenor / 2);
+    }
+  } else if (ejercicio.figura === "circulo") {
+    reparto = porciones(denominadorMenor);
+  } else {
+    reparto = ochoTriangulos();
+  }
 
   return reparto.piezas.map((suya, i) => ({ ...suya, id: `p${i}` }));
 }
@@ -368,6 +418,60 @@ function cuatroTriangulos(): Reparto {
       // el del medio, que está del revés
       pieza(poligono([a, b, c]), 1, 4),
     ],
+  };
+}
+
+/** Cuatro triángulos iguales, cada uno partido por la mitad. */
+function ochoTriangulos(): Reparto {
+  const a = medio(PICO, PIE_IZQ);
+  const b = medio(PICO, PIE_DER);
+  const c = medio(PIE_IZQ, PIE_DER);
+  const triangulos: Punto[][] = [
+    [PICO, b, a],
+    [a, c, PIE_IZQ],
+    [b, PIE_DER, c],
+    [a, b, c],
+  ];
+
+  return {
+    figura: "triangulo",
+    piezas: triangulos.flatMap(([punta, uno, otro]) => {
+      const mitad = medio(uno, otro);
+      return [
+        pieza(poligono([punta, uno, mitad]), 1, 8),
+        pieza(poligono([punta, mitad, otro]), 1, 8),
+      ];
+    }),
+  };
+}
+
+/** Divide cada uno de los tres sectores iguales del triángulo en partes iguales. */
+function triangulosEnTresPartes(cuantas: number): Reparto {
+  const centro: Punto = [
+    (PICO[0] + PIE_IZQ[0] + PIE_DER[0]) / 3,
+    (PICO[1] + PIE_IZQ[1] + PIE_DER[1]) / 3,
+  ];
+  const triangulos: Punto[][] = [
+    [centro, PICO, PIE_DER],
+    [centro, PIE_DER, PIE_IZQ],
+    [centro, PIE_IZQ, PICO],
+  ];
+
+  return {
+    figura: "triangulo",
+    piezas: triangulos.flatMap(([punta, uno, otro]) =>
+      Array.from({ length: cuantas }, (_, i) => {
+        const inicio: Punto = [
+          uno[0] + ((otro[0] - uno[0]) * i) / cuantas,
+          uno[1] + ((otro[1] - uno[1]) * i) / cuantas,
+        ];
+        const fin: Punto = [
+          uno[0] + ((otro[0] - uno[0]) * (i + 1)) / cuantas,
+          uno[1] + ((otro[1] - uno[1]) * (i + 1)) / cuantas,
+        ];
+        return pieza(poligono([punta, inicio, fin]), 1, cuantas * 3);
+      }),
+    ),
   };
 }
 

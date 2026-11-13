@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   where,
@@ -322,6 +323,50 @@ export async function alumnosDelProfesor(cursos: Curso[]) {
   );
 
   return listas.flat();
+}
+
+/**
+ * Lo que hizo un alumno un día concreto. Vive aparte del acumulado porque
+ * «cuántos ejercicios lleva» y «cómo le fue el martes» son preguntas
+ * distintas, y un contador de por vida no sabe responder la segunda.
+ */
+export type Dia = {
+  fecha: string;
+  intentos: number;
+  aciertos: number;
+  porDesafio: Record<string, { intentos: number; aciertos: number }>;
+};
+
+function aDia(datos: Record<string, unknown>): Dia {
+  const porDesafio: Dia["porDesafio"] = {};
+  const cuantos = (datos.byChallenge ?? {}) as Record<
+    string,
+    { a?: number; c?: number }
+  >;
+
+  for (const [desafio, cuanto] of Object.entries(cuantos)) {
+    porDesafio[desafio] = { intentos: cuanto?.a ?? 0, aciertos: cuanto?.c ?? 0 };
+  }
+
+  return {
+    fecha: String(datos.date ?? ""),
+    intentos: Number(datos.attempts ?? 0),
+    aciertos: Number(datos.correct ?? 0),
+    porDesafio,
+  };
+}
+
+/** Los últimos días de un alumno, del más reciente al más antiguo. */
+export async function diasDe(studentId: string, cuantos = 14): Promise<Dia[]> {
+  const encontrados = await getDocs(
+    query(
+      collection(baseDeDatos(), "daily"),
+      where("studentId", "==", studentId),
+      orderBy("date", "desc"),
+      limit(cuantos),
+    ),
+  );
+  return encontrados.docs.map((suyo) => aDia(suyo.data()));
 }
 
 /** Un colegio, para su propio panel. */

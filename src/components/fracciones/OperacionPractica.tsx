@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Figura } from "./Figura";
-import { AyudaSuma } from "./AyudaSuma";
+import { AyudaOperacion } from "./AyudaOperacion";
 import {
   comoTexto,
   cuantoSuman,
@@ -183,19 +183,17 @@ export function OperacionPractica({ operacion }: { operacion: Operacion }) {
         )}
       </div>
 
-      {operacion === "suma" && (
-        <div className="flex flex-col items-center gap-3">
-          <button
-            type="button"
-            aria-expanded={mostrarAyuda}
-            onClick={() => setMostrarAyuda((visible) => !visible)}
-            className="rounded-full bg-violet-100 px-6 py-3 font-extrabold text-violet-900 shadow-sm transition hover:bg-violet-200"
-          >
-            {mostrarAyuda ? "Ocultar ayuda visual" : "💡 Mostrar ayuda visual"}
-          </button>
-          {mostrarAyuda && <AyudaSuma ejercicio={ejercicio} />}
-        </div>
-      )}
+      <div className="flex flex-col items-center gap-3">
+        <button
+          type="button"
+          aria-expanded={mostrarAyuda}
+          onClick={() => setMostrarAyuda((visible) => !visible)}
+          className="rounded-full bg-violet-100 px-6 py-3 font-extrabold text-violet-900 shadow-sm transition hover:bg-violet-200"
+        >
+          {mostrarAyuda ? "Ocultar ayuda visual" : "💡 Mostrar ayuda visual"}
+        </button>
+        {mostrarAyuda && <AyudaOperacion ejercicio={ejercicio} />}
+      </div>
     </div>
   );
 }

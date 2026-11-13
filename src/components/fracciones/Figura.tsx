@@ -59,7 +59,7 @@ export function Figura({
             strokeLinejoin="round"
             className={
               bloqueada
-                ? "outline-none"
+                ? "outline-none transition-[fill] duration-300"
                 : "cursor-pointer outline-none transition-[fill] hover:fill-sky-200 focus-visible:stroke-[4]"
             }
           />

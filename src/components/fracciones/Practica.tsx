@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Figura } from "./Figura";
+import { AyudaPintar } from "./AyudaPintar";
 import {
   comoTexto,
   cuantoSuman,
@@ -24,6 +25,7 @@ export function Practica() {
   const [pintadas, setPintadas] = useState<Set<string>>(new Set());
   const [juzgado, setJuzgado] = useState<boolean | null>(null);
   const [resueltos, setResueltos] = useState(0);
+  const [mostrarAyuda, setMostrarAyuda] = useState(false);
   const [reloj] = useState(cronometro);
 
   const { figura, piezas, objetivo, mezclado } = ejercicio;
@@ -66,6 +68,7 @@ export function Practica() {
     setEjercicio(nuevoEjercicio());
     setPintadas(new Set());
     setJuzgado(null);
+    setMostrarAyuda(false);
     reloj.reiniciar();
   }
 
@@ -137,6 +140,18 @@ export function Practica() {
             </button>
           </>
         )}
+      </div>
+
+      <div className="flex flex-col items-center gap-3">
+        <button
+          type="button"
+          aria-expanded={mostrarAyuda}
+          onClick={() => setMostrarAyuda((visible) => !visible)}
+          className="rounded-full bg-violet-100 px-6 py-3 font-extrabold text-violet-900 shadow-sm transition hover:bg-violet-200"
+        >
+          {mostrarAyuda ? "Ocultar ayuda visual" : "💡 Mostrar ayuda visual"}
+        </button>
+        {mostrarAyuda && <AyudaPintar ejercicio={ejercicio} />}
       </div>
     </div>
   );
