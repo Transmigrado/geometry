@@ -5,6 +5,12 @@ import { Confeti } from "./Confeti";
 import { Escena } from "./Escena";
 import { Frontera } from "./Frontera";
 import { usePerfil } from "@/components/auth/ProveedorPerfil";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  useModal,
+} from "@/components/ui/animated-modal";
 import { atuendoDe } from "@/lib/vestuario";
 
 /** el niño ya no cabe entero con la cámara de siempre dentro de un modal
@@ -20,10 +26,17 @@ const SONIDO = "/sonidos/celebracion.mp3";
 /** lo que se gana cada vez que aparece esta fiesta */
 const MONEDAS_POR_RACHA = 2;
 
+/** cuánto tarda el modal en irse antes de avisarle a quien lo llamó, para
+ * no cortarle la animación de salida a mitad de camino */
+const DURACION_SALIDA = 300;
+
 /**
  * Cada cinco respuestas correctas, el propio muñeco del niño celebra. No es
  * sólo un cartel de «bien hecho»: verse a uno mismo contento es lo que hace
  * que valga la pena seguir jugando.
+ *
+ * El modal en sí —la entrada en 3D, el desenfoque de fondo, el cierre con
+ * la X o tocando afuera— es el de Aceternity; lo de adentro es nuestro.
  */
 export function ModalCelebracion({
   racha,
@@ -32,9 +45,45 @@ export function ModalCelebracion({
   racha: number;
   onContinuar: () => void;
 }) {
+  return (
+    <Modal>
+      <Celebracion racha={racha} onContinuar={onContinuar} />
+    </Modal>
+  );
+}
+
+function Celebracion({
+  racha,
+  onContinuar,
+}: {
+  racha: number;
+  onContinuar: () => void;
+}) {
+  const { open, setOpen } = useModal();
   const { perfil, guardar } = usePerfil();
   const atuendo = atuendoDe(perfil.avatar);
   const otorgadas = useRef(false);
+  const huboAbierto = useRef(false);
+
+  // se abre solo: nadie hace clic en un botón para que aparezca la fiesta
+  useEffect(() => {
+    setOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // no closable: la única forma de cerrarlo es «Continuar», para no
+  // pisarle al niño un toque que en realidad iba para el juego de atrás.
+  // Igual se espera a que termine de salir antes de avisarle al padre
+  useEffect(() => {
+    if (open) {
+      huboAbierto.current = true;
+      return;
+    }
+    if (!huboAbierto.current) return;
+
+    const id = setTimeout(onContinuar, DURACION_SALIDA);
+    return () => clearTimeout(id);
+  }, [open, onContinuar]);
 
   useEffect(() => {
     const audio = new Audio(SONIDO);
@@ -55,8 +104,8 @@ export function ModalCelebracion({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
-      <div className="relative flex w-full max-w-sm flex-col items-center gap-4 overflow-hidden rounded-3xl bg-white p-6 text-center shadow-xl">
+    <ModalBody closable={false} className="max-w-sm border-0 bg-transparent shadow-none">
+      <ModalContent className="relative items-center gap-4 overflow-hidden rounded-3xl bg-white p-6 text-center md:p-6">
         <Confeti />
 
         <p className="text-2xl font-extrabold text-sky-800">
@@ -79,12 +128,12 @@ export function ModalCelebracion({
 
         <button
           type="button"
-          onClick={onContinuar}
+          onClick={() => setOpen(false)}
           className="rounded-full bg-sky-500 px-8 py-4 text-xl font-bold text-white shadow-lg transition hover:bg-sky-600"
         >
           Continuar
         </button>
-      </div>
-    </div>
+      </ModalContent>
+    </ModalBody>
   );
 }
