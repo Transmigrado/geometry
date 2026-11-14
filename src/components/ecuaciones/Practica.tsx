@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Balanza } from "./Balanza";
+import { AyudaEcuacion } from "./AyudaEcuacion";
 import { ModalCelebracion } from "@/components/avatar/ModalCelebracion";
 import { nuevoEjercicio, PRIMER_EJERCICIO } from "@/lib/ecuaciones";
 import { cronometro, errorDe, registrar, TEMAS } from "@/lib/metricas";
@@ -12,6 +13,13 @@ export function Practica() {
   const [resueltos, setResueltos] = useState(0);
   const [noGuardada, setNoGuardada] = useState(false);
   const [celebrando, setCelebrando] = useState(false);
+  const [mostrarAyuda, setMostrarAyuda] = useState(false);
+
+  // PRIMER_EJERCICIO es fijo para que el primer render coincida entre
+  // servidor y navegador; al montar ya podemos sortear uno de verdad.
+  useEffect(() => {
+    setEjercicio(nuevoEjercicio());
+  }, []);
 
   const { fruta, cantidad, peso, extra, total, opciones } = ejercicio;
   const acertada = elegida === null ? null : elegida === peso;
@@ -48,6 +56,7 @@ export function Practica() {
   function siguiente() {
     setEjercicio(nuevoEjercicio());
     setElegida(null);
+    setMostrarAyuda(false);
     reloj.reiniciar();
   }
 
@@ -135,6 +144,18 @@ export function Practica() {
       >
         {acertada ? "Otra pesa ✨" : "Saltar esta"}
       </button>
+
+      <div className="flex flex-col items-center gap-3">
+        <button
+          type="button"
+          aria-expanded={mostrarAyuda}
+          onClick={() => setMostrarAyuda((visible) => !visible)}
+          className="rounded-full bg-violet-100 px-6 py-3 font-extrabold text-violet-900 shadow-sm transition hover:bg-violet-200"
+        >
+          {mostrarAyuda ? "Ocultar ayuda visual" : "💡 Mostrar ayuda visual"}
+        </button>
+        {mostrarAyuda && <AyudaEcuacion ejercicio={ejercicio} />}
+      </div>
 
       {celebrando && (
         <ModalCelebracion
