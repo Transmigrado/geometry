@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Balanza } from "./Balanza";
+import { BalanzaDosLados } from "./BalanzaDosLados";
 import { AyudaEcuacion } from "./AyudaEcuacion";
+import { AyudaEcuacionDosLados } from "./AyudaEcuacionDosLados";
 import { ModalCelebracion } from "@/components/avatar/ModalCelebracion";
 import { nuevoEjercicio, PRIMER_EJERCICIO } from "@/lib/ecuaciones";
-import { cronometro, errorDe, registrar, TEMAS } from "@/lib/metricas";
+import { cronometro, errorDe, errorDeDosLados, registrar, TEMAS } from "@/lib/metricas";
 
 export function Practica() {
-  const [ejercicio, setEjercicio] = useState(PRIMER_EJERCICIO);
+  const [ejercicio, setEjercicio] = useState<ReturnType<typeof nuevoEjercicio>>(PRIMER_EJERCICIO);
   const [elegida, setElegida] = useState<number | null>(null);
   const [resueltos, setResueltos] = useState(0);
   const [noGuardada, setNoGuardada] = useState(false);
@@ -21,11 +23,8 @@ export function Practica() {
     setEjercicio(nuevoEjercicio());
   }, []);
 
-  const { fruta, cantidad, peso, extra, total, opciones } = ejercicio;
+  const { fruta, peso } = ejercicio;
   const acertada = elegida === null ? null : elegida === peso;
-  const conPesa = extra > 0;
-  /** lo que marcaría la pesa con la respuesta elegida */
-  const marcaria = cantidad * (elegida ?? 0) + extra;
 
   // desde cuándo lleva mirando este ejercicio
   const [reloj] = useState(cronometro);
@@ -40,13 +39,24 @@ export function Practica() {
       if (total % 5 === 0) setCelebrando(true);
     }
 
+    const detalle =
+      ejercicio.tipo === "doslados"
+        ? {
+            tema: TEMAS.ecuacionDosLados,
+            desafio: "equations.bothsides",
+            error: errorDeDosLados(opcion, ejercicio),
+          }
+        : {
+            tema: ejercicio.extra > 0 ? TEMAS.ecuacionConPesa : TEMAS.ecuacionSimple,
+            desafio: ejercicio.extra > 0 ? "equations.constant" : "equations.simple",
+            error: errorDe(opcion, ejercicio),
+          };
+
     void registrar({
       modulo: "equations",
-      tema: conPesa ? TEMAS.ecuacionConPesa : TEMAS.ecuacionSimple,
-      desafio: conPesa ? "equations.constant" : "equations.simple",
+      ...detalle,
       tipo: "answer",
       acierto: opcion === peso,
-      error: errorDe(opcion, { cantidad, peso, total, extra }),
       duracion: reloj.ms(),
     }).then((guardada) => {
       if (!guardada) setNoGuardada(true);
@@ -72,22 +82,45 @@ export function Practica() {
       </header>
 
       <section className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 shadow-sm">
-        <Balanza
-          fruta={fruta}
-          cantidad={cantidad}
-          extra={extra}
-          marca={acertada === false ? marcaria : total}
-          correcta={acertada}
-        />
-
-        <p className="text-2xl font-extrabold text-slate-800">
-          {cantidad} × {fruta.emoji}
-          {conPesa && ` + ${extra}`} = {total}
-        </p>
+        {ejercicio.tipo === "doslados" ? (
+          <>
+            <BalanzaDosLados
+              fruta={fruta}
+              cantidadIzquierda={ejercicio.cantidadIzquierda}
+              extraIzquierda={ejercicio.extraIzquierda}
+              cantidadDerecha={ejercicio.cantidadDerecha}
+              extraDerecha={ejercicio.extraDerecha}
+            />
+            <p className="text-2xl font-extrabold text-slate-800">
+              {ejercicio.cantidadIzquierda} × {fruta.emoji}
+              {ejercicio.extraIzquierda > 0 && ` + ${ejercicio.extraIzquierda}`} ={" "}
+              {ejercicio.cantidadDerecha} × {fruta.emoji}
+              {ejercicio.extraDerecha > 0 && ` + ${ejercicio.extraDerecha}`}
+            </p>
+          </>
+        ) : (
+          <>
+            <Balanza
+              fruta={fruta}
+              cantidad={ejercicio.cantidad}
+              extra={ejercicio.extra}
+              marca={
+                acertada === false
+                  ? ejercicio.cantidad * (elegida ?? 0) + ejercicio.extra
+                  : ejercicio.total
+              }
+              correcta={acertada}
+            />
+            <p className="text-2xl font-extrabold text-slate-800">
+              {ejercicio.cantidad} × {fruta.emoji}
+              {ejercicio.extra > 0 && ` + ${ejercicio.extra}`} = {ejercicio.total}
+            </p>
+          </>
+        )}
       </section>
 
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {opciones.map((opcion) => (
+        {ejercicio.opciones.map((opcion) => (
           <li key={opcion}>
             <button
               type="button"
@@ -107,10 +140,15 @@ export function Practica() {
 
       {acertada === false && (
         <p className="rounded-3xl bg-amber-100 p-6 text-lg font-bold text-amber-900">
-          Si cada {fruta.nombre} pesara {elegida}, la pesa marcaría {cantidad} ×{" "}
-          {elegida}
-          {conPesa && ` + ${extra}`} = {marcaria}, y marca {total}. Prueba con
-          otra.
+          {ejercicio.tipo === "doslados"
+            ? `Si cada ${fruta.nombre} pesara ${elegida}, un lado pesaría ${
+                ejercicio.cantidadIzquierda * (elegida ?? 0) + ejercicio.extraIzquierda
+              } y el otro ${
+                ejercicio.cantidadDerecha * (elegida ?? 0) + ejercicio.extraDerecha
+              }: no quedan iguales. Prueba con otra.`
+            : `Si cada ${fruta.nombre} pesara ${elegida}, la pesa marcaría ${
+                ejercicio.cantidad * (elegida ?? 0) + ejercicio.extra
+              }, y marca ${ejercicio.total}. Prueba con otra.`}
         </p>
       )}
 
@@ -120,13 +158,19 @@ export function Practica() {
             🎉 ¡Eso es! Cada {fruta.nombre} pesa {peso}
           </p>
           <p className="mt-2 text-lg font-bold text-emerald-50">
-            {conPesa
-              ? `Primero sacamos la pesa de ${extra}: ${total} − ${extra} = ${
-                  total - extra
-                }. Eso pesan las ${fruta.plural} juntas, así que ${
-                  total - extra
-                } ÷ ${cantidad} = ${peso}.`
-              : `Para encontrarlo repartimos lo que marca la pesa entre las ${fruta.plural}: ${total} ÷ ${cantidad} = ${peso}.`}
+            {ejercicio.tipo === "doslados" ? (
+              <TextoDosLados ejercicio={ejercicio} />
+            ) : ejercicio.extra > 0 ? (
+              `Primero sacamos la pesa de ${ejercicio.extra}: ${ejercicio.total} − ${
+                ejercicio.extra
+              } = ${ejercicio.total - ejercicio.extra}. Eso pesan las ${
+                fruta.plural
+              } juntas, así que ${ejercicio.total - ejercicio.extra} ÷ ${
+                ejercicio.cantidad
+              } = ${peso}.`
+            ) : (
+              `Para encontrarlo repartimos lo que marca la pesa entre las ${fruta.plural}: ${ejercicio.total} ÷ ${ejercicio.cantidad} = ${peso}.`
+            )}
           </p>
         </section>
       )}
@@ -154,7 +198,12 @@ export function Practica() {
         >
           {mostrarAyuda ? "Ocultar ayuda visual" : "💡 Mostrar ayuda visual"}
         </button>
-        {mostrarAyuda && <AyudaEcuacion ejercicio={ejercicio} />}
+        {mostrarAyuda &&
+          (ejercicio.tipo === "doslados" ? (
+            <AyudaEcuacionDosLados ejercicio={ejercicio} />
+          ) : (
+            <AyudaEcuacion ejercicio={ejercicio} />
+          ))}
       </div>
 
       {celebrando && (
@@ -164,6 +213,25 @@ export function Practica() {
         />
       )}
     </div>
+  );
+}
+
+function TextoDosLados({
+  ejercicio,
+}: {
+  ejercicio: Extract<ReturnType<typeof nuevoEjercicio>, { tipo: "doslados" }>;
+}) {
+  const { fruta, cantidadIzquierda, extraIzquierda, cantidadDerecha, extraDerecha, peso } =
+    ejercicio;
+  const diferenciaFrutas = Math.abs(cantidadIzquierda - cantidadDerecha);
+  const diferenciaExtra = Math.abs(extraDerecha - extraIzquierda);
+
+  return (
+    <>
+      Juntamos las {fruta.plural} de un mismo lado y los números del otro: eso
+      deja {diferenciaFrutas} × {fruta.nombre} = {diferenciaExtra}. Por eso{" "}
+      {fruta.nombre} = {diferenciaExtra} ÷ {diferenciaFrutas} = {peso}.
+    </>
   );
 }
 

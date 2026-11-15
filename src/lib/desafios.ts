@@ -92,6 +92,17 @@ export const DESAFIOS: Desafio[] = [
     ],
   },
   {
+    id: "equations.bothsides",
+    modulo: "equations",
+    tema: "equations.bothsides",
+    nombre: "Pesa en los dos platillos",
+    pie: "Frutas y pesas a los dos lados de la balanza: hay que despejar para saber cuánto pesa cada una.",
+    ajustes: [
+      { clave: "diferenciaGrande", nombre: "Diferencia de más de tres frutas entre lados", porDefecto: false },
+      { clave: "pesosGrandes", nombre: "Pesos de más de dos cifras", porDefecto: false },
+    ],
+  },
+  {
     id: "fractions.equal",
     modulo: "fractions",
     tema: "fractions.identify",

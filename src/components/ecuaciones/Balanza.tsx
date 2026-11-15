@@ -77,7 +77,7 @@ export function Balanza({ fruta, cantidad, extra, marca, correcta }: Props) {
 }
 
 /** La pesa de metal de toda la vida, con su asa y su número grabado. */
-function Pesa({
+export function Pesa({
   x,
   suelo,
   tamano,

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Balanza } from "./Balanza";
-import type { Ejercicio, Fruta } from "@/lib/ecuaciones";
+import type { EjercicioUnLado, Fruta } from "@/lib/ecuaciones";
 import { useReproduccion } from "@/components/problema/animacion";
 
 const PASO_MS = 900;
 
-export function AyudaEcuacion({ ejercicio }: { ejercicio: Ejercicio }) {
+export function AyudaEcuacion({ ejercicio }: { ejercicio: EjercicioUnLado }) {
   const { fruta, cantidad, peso, extra, total } = ejercicio;
   const conPesa = extra > 0;
   // con pesa: un paso para quitarla y uno por cada fruta que sobra;

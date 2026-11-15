@@ -38,6 +38,7 @@ export const TEMAS = {
   medirVolumen: "geometry.measurevolume",
   ecuacionSimple: "equations.simple",
   ecuacionConPesa: "equations.withconstant",
+  ecuacionDosLados: "equations.bothsides",
   fraccionIdentificar: "fractions.identify",
   fraccionSuma: "fractions.addition",
   fraccionResta: "fractions.subtraction",
@@ -51,6 +52,7 @@ export const NOMBRE_TEMA: Record<Tema, string> = {
   "geometry.measurevolume": "Medir volumen",
   "equations.simple": "Ecuaciones simples",
   "equations.withconstant": "Ecuaciones con pesa",
+  "equations.bothsides": "Ecuaciones con fruta en los dos platillos",
   "fractions.identify": "Reconocer fracciones",
   "fractions.addition": "Sumar fracciones",
   "fractions.subtraction": "Restar fracciones",
@@ -76,6 +78,26 @@ export function errorDe(
   if (extra > 0 && elegida === total - extra) return "olvidarepartir";
   if (extra === 0 && elegida === total - cantidad) return "restaenvezdedividir";
   if (extra === 0 && elegida === cantidad) return "cuentalasfrutas";
+  return "porpoco";
+}
+
+/**
+ * Lo mismo, para cuando la fruta aparece a los dos lados: aquí el
+ * descuido típico es quedarse con la diferencia de frutas o la de pesas,
+ * en vez de repartir una entre la otra.
+ */
+export function errorDeDosLados(
+  elegida: number,
+  { cantidadIzquierda, extraIzquierda, cantidadDerecha, extraDerecha, peso }: {
+    cantidadIzquierda: number; extraIzquierda: number;
+    cantidadDerecha: number; extraDerecha: number; peso: number;
+  },
+): string | null {
+  if (elegida === peso) return null;
+  const diferenciaFrutas = Math.abs(cantidadIzquierda - cantidadDerecha);
+  const diferenciaExtra = Math.abs(extraDerecha - extraIzquierda);
+  if (elegida === diferenciaExtra) return "noreparteelresto";
+  if (elegida === diferenciaFrutas) return "confundioelconteo";
   return "porpoco";
 }
 
