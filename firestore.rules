@@ -293,7 +293,7 @@ service cloud.firestore {
         // el día que dice el niño; el trigger lo contrasta con su reloj
         && d.localDate is string
         && d.localDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && d.module in ['geometry', 'equations', 'fractions']
+        && d.module in ['geometry', 'equations', 'fractions', 'integers']
         && temaValido(d.topic)
         && d.kind in ['answer', 'explore']
         // Un paseo por el wizard no es un acierto. Si «explore» pudiera

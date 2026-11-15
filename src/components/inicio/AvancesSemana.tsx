@@ -14,6 +14,7 @@ const MATERIAS: {
   { id: "fractions", nombre: "Fracciones", color: "bg-violet-500", fondo: "bg-violet-50" },
   { id: "equations", nombre: "Ecuaciones", color: "bg-emerald-500", fondo: "bg-emerald-50" },
   { id: "geometry", nombre: "Geometría", color: "bg-amber-500", fondo: "bg-amber-50" },
+  { id: "integers", nombre: "Números enteros", color: "bg-sky-500", fondo: "bg-sky-50" },
 ];
 
 type Conteo = { ejercicios: number; aciertos: number };
@@ -60,7 +61,7 @@ export function AvancesSemana({ alumno }: { alumno: string }) {
           No pudimos cargar tus avances. Vuelve a cargar la página para intentarlo otra vez.
         </p>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MATERIAS.map((materia) => (
             <TarjetaMateria key={materia.id} materia={materia} dias={dias} />
           ))}

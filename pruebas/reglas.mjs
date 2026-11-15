@@ -216,6 +216,13 @@ await caso("un intento suyo, bien formado", () =>
     kind: "answer", correct: false, errorKind: "contolaspiezas",
     durationMs: 4200, createdAt: serverTimestamp(),
   })));
+await caso("uno de enteros también", () =>
+  assertSucceeds(setDoc(doc(nino, "attempts", "intentoEnteros"), {
+    studentId: NINO, courseId: CURSO, schoolId: COLEGIO,
+    module: "integers", topic: "integers.addition",
+    challenge: "integers.addition", localDate: HOY,
+    kind: "answer", correct: true, createdAt: serverTimestamp(),
+  })));
 await caso("pero no uno sin decir qué desafío era", () =>
   assertFails(setDoc(doc(nino, "attempts", "intentoX"), {
     studentId: NINO, courseId: CURSO, schoolId: COLEGIO,

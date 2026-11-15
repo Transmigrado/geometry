@@ -5,6 +5,7 @@ import { usePerfil } from "@/components/auth/ProveedorPerfil";
 import { IconoProblema } from "@/components/problema/IconoProblema";
 import { IconoBalanza } from "@/components/ecuaciones/IconoBalanza";
 import { IconoFracciones } from "@/components/fracciones/IconoFracciones";
+import { IconoAuto } from "@/components/enteros/IconoAuto";
 
 /**
  * El tablero del niño: por dónde quiere empezar hoy.
@@ -52,6 +53,14 @@ const MATERIAS: Materia[] = [
     fondo: "bg-violet-100 hover:bg-violet-200",
     tinta: "text-violet-900",
     dibujo: <IconoFracciones color="#6d28d9" />,
+  },
+  {
+    href: "/enteros",
+    nombre: "Números enteros",
+    pie: "Suma enteros viendo cómo el auto avanza o retrocede.",
+    fondo: "bg-sky-100 hover:bg-sky-200",
+    tinta: "text-sky-900",
+    dibujo: <IconoAuto color="#0369a1" />,
   },
 ];
 

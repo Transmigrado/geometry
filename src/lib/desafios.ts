@@ -103,6 +103,16 @@ export const DESAFIOS: Desafio[] = [
     ],
   },
   {
+    id: "integers.addition",
+    modulo: "integers",
+    tema: "integers.addition",
+    nombre: "Sumar números enteros",
+    pie: "Un auto avanza con los números positivos y retrocede con los negativos.",
+    ajustes: [
+      { clave: "valoresGrandes", nombre: "Valores de más de un dígito", porDefecto: true },
+    ],
+  },
+  {
     id: "fractions.equal",
     modulo: "fractions",
     tema: "fractions.identify",
@@ -163,4 +173,5 @@ export const DESAFIOS_DE: Record<Modulo, Desafio[]> = {
   geometry: DESAFIOS.filter((cual) => cual.modulo === "geometry"),
   equations: DESAFIOS.filter((cual) => cual.modulo === "equations"),
   fractions: DESAFIOS.filter((cual) => cual.modulo === "fractions"),
+  integers: DESAFIOS.filter((cual) => cual.modulo === "integers"),
 };

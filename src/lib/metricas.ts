@@ -25,7 +25,7 @@ import {
 import { autenticacion, baseDeDatos, hayConfiguracion } from "./firebase";
 import type { TipoCuerpo } from "./cuerpos";
 
-export type Modulo = "geometry" | "equations" | "fractions";
+export type Modulo = "geometry" | "equations" | "fractions" | "integers";
 
 /**
  * El tema es la unidad del panel: «en qué flojea el curso». Van en inglés
@@ -42,6 +42,7 @@ export const TEMAS = {
   fraccionIdentificar: "fractions.identify",
   fraccionSuma: "fractions.addition",
   fraccionResta: "fractions.subtraction",
+  enterosSuma: "integers.addition",
 } as const;
 
 export type Tema = (typeof TEMAS)[keyof typeof TEMAS];
@@ -56,6 +57,7 @@ export const NOMBRE_TEMA: Record<Tema, string> = {
   "fractions.identify": "Reconocer fracciones",
   "fractions.addition": "Sumar fracciones",
   "fractions.subtraction": "Restar fracciones",
+  "integers.addition": "Sumar números enteros",
 };
 
 /** El tema de un problema de geometría, según su tipo. */
@@ -98,6 +100,22 @@ export function errorDeDosLados(
   const diferenciaExtra = Math.abs(extraDerecha - extraIzquierda);
   if (elegida === diferenciaExtra) return "noreparteelresto";
   if (elegida === diferenciaFrutas) return "confundioelconteo";
+  return "porpoco";
+}
+
+/**
+ * Para la suma de enteros, lo típico es sumar como si todo fuera positivo
+ * (ignorar el signo), restar en vez de sumar, o acertar el número pero no
+ * el signo.
+ */
+export function errorDeEnteros(
+  elegida: number,
+  { a, b, resultado }: { a: number; b: number; resultado: number },
+): string | null {
+  if (elegida === resultado) return null;
+  if (elegida === Math.abs(a) + Math.abs(b)) return "ignoroelsigno";
+  if (elegida === a - b || elegida === b - a) return "restoenvezdesumar";
+  if (elegida === -resultado) return "signoinvertido";
   return "porpoco";
 }
 
